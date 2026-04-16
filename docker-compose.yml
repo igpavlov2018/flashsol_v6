@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: flashsol_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: flashsol
+      POSTGRES_USER: flashsol
+      POSTGRES_PASSWORD: flashsol_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/src/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flashsol -d flashsol"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: flashsol_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://flashsol:flashsol_dev@postgres:5432/flashsol
+      DB_SSL: "false"
+      SOLANA_NETWORK: devnet
+      RPC_URL: https://api.devnet.solana.com
+      PROJECT_WALLET: ${PROJECT_WALLET}
+      ADMIN_SECRET: ${ADMIN_SECRET:-dev_secret_change_me_32chars_min}
+      FRONTEND_URL: http://localhost:5500
+      PORT: 3001
+      NODE_ENV: development
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend/src:/app/src
+      - /app/node_modules
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>FlashSol</title>
+<link rel="manifest" href="/manifest.json"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="FlashSol"/>
+<meta name="theme-color" content="#08050f"/>
+<link rel="apple-touch-icon" href="/icons/icon-192.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&family=Russo+One&family=Oswald:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:#08050f;color:#dde4f0;font-family:'Space Grotesk','Noto Sans',sans-serif;font-size:16px;overflow-x:hidden;min-height:100vh}
+:root{
+  --acc:#14F195;--acc2:#9945FF;--warn:#ffb347;--danger:#ff4d6d;
+  --bg3:#110a20;--bg4:#180d28;
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);
+  --muted:#5a6a8a;
+  --mono:'IBM Plex Mono',monospace;--display:'Russo One','Oswald',sans-serif;
+  --max:1280px;
+}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:#180d28;border-radius:4px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(20,241,149,.4)}70%{box-shadow:0 0 0 8px rgba(20,241,149,0)}}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(rgba(20,241,149,.025) 1px,transparent 1px);background-size:30px 30px;pointer-events:none;z-index:0}
+
+/* nav */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:68px;background:rgba(8,5,15,.93);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 32px;gap:12px}
+#logo{display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:0;flex-shrink:0}
+#logo .ic{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:flex;align-items:center;justify-content:center;font-size:20px;color:#000;font-weight:900}
+#logo .nm{font-family:var(--display);font-size:26px;letter-spacing:.06em;background:linear-gradient(135deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+#nav-mid{flex:1;display:flex;justify-content:center;gap:4px}
+.nb{background:transparent;color:var(--muted);border:1px solid transparent;border-radius:9px;padding:9px 20px;cursor:pointer;font-size:15px;font-weight:600;font-family:'Space Grotesk',sans-serif;transition:all .15s}
+.nb:hover,.nb.on{background:rgba(20,241,149,.1);color:var(--acc);border-color:rgba(20,241,149,.25)}
+#nav-r{display:flex;gap:8px;align-items:center;flex-shrink:0}
+
+/* lang — 3x3 grid */
+#lw{position:relative}
+#lb{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:9px;padding:9px 16px;cursor:pointer;color:var(--muted);font-size:14px;font-weight:600;font-family:'Space Grotesk',sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#lm{position:absolute;top:calc(100% + 6px);right:0;background:#110a20;border:1px solid var(--border2);border-radius:12px;padding:8px;z-index:500;box-shadow:0 8px 28px rgba(0,0,0,.7);display:none;width:180px}
+#lm.open{display:block}
+#lm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.li{display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 6px;background:transparent;color:#dde4f0;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-family:'Space Grotesk',sans-serif;text-align:center;transition:background .12s}
+.li:hover{background:rgba(255,255,255,.06)}
+.li.on{background:rgba(20,241,149,.1);color:var(--acc);font-weight:700}
+
+/* ref btn */
+#rfb{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;padding:7px 13px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:600;font-family:'Space Grotesk',sans-serif;transition:all .2s;display:none}
+#rfb.cp{background:rgba(20,241,149,.12);border-color:rgba(20,241,149,.3);color:var(--acc)}
+
+/* wallet btn */
+#wb{border:none;border-radius:9px;padding:10px 22px;cursor:pointer;font-weight:700;font-size:15px;font-family:'Space Grotesk',sans-serif;transition:all .2s;white-space:nowrap}
+#wb.off{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#000;box-shadow:0 0 18px rgba(20,241,149,.3)}
+#wb.on{background:rgba(255,77,109,.1);color:var(--danger);border:1px solid rgba(255,77,109,.3)}
+#wb.wait{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--border)}
+#wb:disabled{opacity:.6;cursor:wait}
+
+/* ticker */
+#tk{height:28px;background:rgba(0,0,0,.75);border-bottom:1px solid var(--border);overflow:hidden;display:flex;align-items:center;position:fixed;top:68px;left:0;right:0;z-index:99}
+#tk .tg{background:var(--acc);color:#000;padding:0 14px;height:100%;display:flex;align-items:center;font-size:9px;font-weight:700;letter-spacing:.12em;flex-shrink:0}
+#tk .tt{overflow:hidden;flex:1}
+#tk .ti{display:inline-block;white-space:nowrap;animation:ticker 55s linear infinite;font-family:var(--mono);font-size:10px;color:var(--muted);padding:0 16px}
+
+/* pages */
+#app{padding-top:96px;position:relative;z-index:1;min-height:calc(100vh - 96px)}
+.pg{display:none}.pg.on{display:block;animation:fadeUp .4s ease}
+
+/* hero */
+.hero{max-width:var(--max);margin:0 auto;padding:48px 32px 0;text-align:center}
+.badge{display:inline-flex;align-items:center;gap:8px;background:rgba(20,241,149,.07);border:1px solid rgba(20,241,149,.18);border-radius:100px;padding:6px 18px;margin-bottom:20px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--acc);display:inline-block;animation:pulse 2s infinite}
+.badge span{color:var(--acc);font-size:12px;font-family:var(--mono);font-weight:600}
+.hero h1{text-transform:uppercase;font-family:var(--display);font-size:clamp(52px,7vw,90px);letter-spacing:.02em;line-height:.93;margin-bottom:16px}
+.g1{background:linear-gradient(135deg,#fff,#8090b0);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.g2{background:linear-gradient(135deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--muted);font-size:16px;margin-bottom:32px}
+
+/* секция-заголовок */
+.sec-title{max-width:var(--max);margin:0 auto;padding:36px 32px 16px;text-align:center}
+.sec-title h2{font-family:var(--display);font-size:clamp(22px,3vw,32px);letter-spacing:.12em;text-transform:uppercase;color:#dde4f0}
+
+/* пилюля бонусов 30/20/10/5% */
+.bonus-pill{max-width:var(--max);margin:0 auto;padding:0 32px 12px}
+.bonus-pill-inner{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);border-radius:100px;display:flex;overflow:hidden}
+.bp-cell{flex:1;padding:22px 16px;text-align:center;position:relative}
+.bp-cell+.bp-cell::before{content:'';position:absolute;left:0;top:20%;height:60%;width:1px;background:rgba(255,255,255,.1)}
+.bp-pct{font-family:var(--display);font-size:clamp(28px,3.5vw,44px);font-weight:900;line-height:1;margin-bottom:6px}
+.bp-lbl{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+/* stats пилюля */
+.sbar{max-width:var(--max);margin:0 auto;padding:0 32px 12px}
+.sbar-inner{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);border-radius:100px;display:flex;overflow:hidden}
+.si{flex:1;padding:9px 12px;text-align:center;position:relative;display:flex;align-items:center;justify-content:center;gap:6px}
+.si+.si::before{content:'';position:absolute;left:0;top:20%;height:60%;width:1px;background:rgba(255,255,255,.1)}
+.si-lbl{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.si-val{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--acc)}
+
+/* no phantom banner */
+#nph{background:rgba(255,179,71,.07);border:1px solid rgba(255,179,71,.22);border-radius:10px;padding:12px 20px;margin:0 32px 16px;color:var(--warn);font-size:14px;text-align:center;cursor:pointer;display:none}
+
+/* level cards */
+.grid{max-width:var(--max);margin:0 auto;padding:0 32px 32px;display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}
+.card{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:28px 24px;cursor:pointer;transition:all .22s;position:relative;display:flex;flex-direction:column}
+.card:hover{transform:translateY(-3px);background:rgba(255,255,255,.04);box-shadow:0 8px 32px rgba(0,0,0,.35)}
+/* Карточка заблокирована (уровень ниже спонсора) */
+.card.locked{opacity:.45;cursor:not-allowed;pointer-events:none}
+.card.locked::after{content:'🔒';position:absolute;top:14px;right:14px;font-size:18px}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.cie{display:flex;align-items:center;gap:14px}
+.cic{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px}
+.cn{font-family:var(--display);font-size:26px;letter-spacing:.06em;line-height:1;text-transform:uppercase}
+.cs{font-family:var(--mono);font-size:22px;font-weight:700;color:#fff;line-height:1;margin-top:4px}
+.cs span{font-size:13px;color:var(--muted);margin-left:4px}
+.abadge{background:rgba(20,241,149,.15);border:1px solid rgba(20,241,149,.4);border-radius:5px;padding:3px 8px;color:var(--acc);font-size:9px;font-weight:700;font-family:var(--mono)}
+.lkbadge{background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.3);border-radius:5px;padding:3px 8px;color:var(--danger);font-size:9px;font-weight:700;font-family:var(--mono)}
+.cpays{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.cpays-title{font-size:9px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;font-family:var(--mono);padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.05)}
+.pr{display:flex;justify-content:space-between;align-items:center;padding:5px 0;margin-bottom:2px}
+.pr:last-child{margin-bottom:0}
+.prl{display:flex;align-items:center;gap:8px}
+.prn{width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700}
+.prlb{font-size:13px;color:var(--muted)}
+.prv{font-family:var(--mono);font-weight:700;font-size:14px}
+.prs{font-size:11px;color:var(--muted);margin-left:3px}
+.ccta{border-radius:10px;padding:13px;text-align:center;font-weight:700;font-size:15px;margin-top:auto}
+.cst{border-radius:10px;padding:12px;text-align:center;font-size:13px;background:rgba(0,0,0,.2);min-height:42px;margin-top:auto}
+.cst a{color:var(--acc2);font-size:12px;text-decoration:none;display:block;margin-top:5px}
+.spin{animation:spin .8s linear infinite;display:inline-block;margin-right:4px}
+
+/* dashboard */
+.dpage{max-width:var(--max);margin:0 auto;padding:28px 32px}
+.lock{text-align:center;padding:80px 32px}
+.lock .li2{font-size:56px;margin-bottom:16px}
+.lock h3{font-family:var(--display);font-size:42px;margin-bottom:12px}
+.lock p{color:var(--muted);font-size:16px;margin-bottom:26px}
+.lock button{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#000;border:none;border-radius:10px;padding:14px 30px;cursor:pointer;font-weight:700;font-size:16px;font-family:'Space Grotesk',sans-serif}
+.d2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.dc{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:16px;padding:22px 24px}
+.dlb{font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-family:var(--mono);margin-bottom:11px}
+#ea{font-family:var(--mono);font-size:38px;font-weight:700;color:var(--acc);line-height:1}
+.dss{display:flex;gap:20px;margin-top:14px;flex-wrap:wrap}
+.dsi .dl{font-size:11px;color:var(--muted);margin-bottom:4px}
+.dsi .dv{font-family:var(--mono);font-size:16px;font-weight:700}
+.rc{background:rgba(20,241,149,.04);border:1px solid rgba(20,241,149,.15);border-radius:16px;padding:22px 24px;display:flex;flex-direction:column;gap:11px}
+.rlb{font-size:10px;color:var(--acc);letter-spacing:.1em;text-transform:uppercase;font-family:var(--mono)}
+#rld{font-family:var(--mono);font-size:11px;color:var(--muted);background:rgba(0,0,0,.3);border-radius:8px;padding:9px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rbs{display:flex;gap:8px}
+.rb1,.rb2{flex:1;border-radius:9px;padding:10px;cursor:pointer;font-weight:700;font-size:13px;font-family:'Space Grotesk',sans-serif;border:none}
+.rb1{background:rgba(20,241,149,.1);color:var(--acc);border:1px solid rgba(20,241,149,.2)}
+.rb1.cp{background:rgba(20,241,149,.2)}
+.rb2{background:rgba(153,69,255,.08);color:var(--acc2);border:1px solid rgba(153,69,255,.2)}
+#wi{font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+#wi a{color:var(--acc2);text-decoration:none;font-family:var(--mono);font-size:11px}
+
+/* min level badge в кабинете */
+.min-level-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,179,71,.08);border:1px solid rgba(255,179,71,.25);border-radius:8px;padding:8px 14px;font-size:12px;color:var(--warn);font-family:var(--mono);margin-top:4px}
+
+/* share by level блок */
+.share-levels{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.share-level-btn{display:flex;align-items:center;justify-content:space-between;border:none;border-radius:10px;padding:10px 14px;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;transition:all .15s}
+/* Два блока платформ 4x2 */
+.share-platforms-wrap{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.share-platforms-group-lbl{font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-family:var(--mono);margin-bottom:4px}
+.share-platforms{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.sp-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:none;border-radius:9px;padding:8px 4px;cursor:pointer;font-size:10px;font-weight:600;font-family:'Space Grotesk',sans-serif;transition:all .15s;min-height:52px}
+.sp-btn img{width:22px;height:22px;object-fit:contain;border-radius:4px}
+.sp-btn:hover{opacity:.8;transform:translateY(-1px)}
+
+/* earn grid */
+#eg{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:16px;padding:18px 22px;margin-bottom:16px;display:none}
+#eg .et{font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-family:var(--mono);margin-bottom:13px}
+.egr{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ec{background:rgba(0,0,0,.2);border-radius:10px;padding:14px;text-align:center;border:1px solid var(--border)}
+.ec .el{font-size:10px;color:var(--muted);margin-bottom:5px}
+.ec .ev{font-family:var(--mono);font-size:18px;font-weight:700;line-height:1}
+.ec .es{font-size:10px;color:var(--muted);margin-top:3px}
+
+/* tabs */
+.tabs{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.tbar{display:flex;border-bottom:1px solid var(--border)}
+.tb{flex:1;padding:14px;background:transparent;color:var(--muted);border:none;border-bottom:2px solid transparent;cursor:pointer;font-weight:600;font-size:14px;font-family:'Space Grotesk',sans-serif;transition:all .15s}
+.tb.on{background:rgba(20,241,149,.06);color:var(--acc);border-bottom-color:var(--acc)}
+.tc{padding:16px 18px;min-height:100px}
+.tp{display:none}.tp.on{display:block}
+.em{text-align:center;padding:28px;color:var(--muted);font-size:15px}
+table.dt{width:100%;border-collapse:collapse;font-size:13px}
+table.dt th{padding:0 0 9px;color:var(--muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);font-weight:400;text-align:left}
+table.dt td{padding:10px 0;border-top:1px solid var(--border)}
+.tok{background:rgba(20,241,149,.1);border:1px solid rgba(20,241,149,.25);border-radius:5px;padding:3px 8px;color:var(--acc);font-size:10px;font-weight:700;font-family:var(--mono)}
+.terr{background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.25);border-radius:5px;padding:3px 8px;color:var(--danger);font-size:10px;font-weight:700;font-family:var(--mono)}
+#rfbtn{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:9px;padding:7px 13px;cursor:pointer;color:var(--muted);font-size:13px;display:flex;align-items:center;gap:6px;margin-left:auto;margin-bottom:13px;font-family:'Space Grotesk',sans-serif}
+
+/* how page */
+.hpage{max-width:var(--max);margin:0 auto;padding:48px 32px}
+.ptag{font-size:10px;letter-spacing:.15em;text-transform:uppercase;font-family:var(--mono);margin-bottom:10px}
+.ph2{font-family:var(--display);font-size:clamp(36px,5vw,60px);letter-spacing:.03em;margin-bottom:32px}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:36px}
+.sc{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:14px;padding:26px 20px;position:relative;overflow:hidden}
+.sn{position:absolute;top:10px;right:14px;font-family:var(--mono);font-size:38px;font-weight:900;color:rgba(255,255,255,.03)}
+.si2{font-size:28px;margin-bottom:12px}
+.st{font-family:var(--display);font-size:22px;letter-spacing:.04em;margin-bottom:6px}
+.sd{font-size:14px;color:var(--muted);line-height:1.6}
+.tree{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:14px;padding:0;overflow:hidden}
+.tree-header{padding:22px 24px 18px;border-bottom:1px solid var(--border)}
+.tree-levels{padding:20px 24px;background:rgba(0,0,0,.18);border-bottom:1px solid var(--border)}
+.tree-calc{padding:20px 24px}
+.trtitle{font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-family:var(--mono);margin-bottom:16px}
+.youb{display:inline-block;background:var(--acc);color:#000;border-radius:9px;padding:8px 20px;font-weight:800;font-size:14px;font-family:var(--mono);margin-bottom:14px}
+.trow{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.tline{width:2px;height:26px;flex-shrink:0;margin-left:14px}
+.tblk{flex:1;border-radius:9px;padding:8px 13px;display:flex;justify-content:space-between;align-items:center}
+.tbl .tn{font-size:11px;color:var(--muted)}
+.tbl .tp{font-family:var(--mono);font-size:11px;font-weight:600}
+.tbr{font-family:var(--mono);font-weight:700;font-size:13px}
+.tbr span{font-size:9px;color:var(--muted);margin-left:2px}
+
+/* faq */
+.fpage{max-width:800px;margin:0 auto;padding:48px 32px}
+.fi{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:9px;cursor:pointer;transition:border-color .2s}
+.fi.op{border-color:rgba(20,241,149,.25)}
+.fq{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.fq span{font-weight:600;font-size:16px}
+.fi.op .fq span{color:var(--acc)}
+.fqic{color:var(--muted);font-size:16px;transition:transform .2s;flex-shrink:0}
+.fi.op .fqic{transform:rotate(45deg)}
+.fa{display:none;margin-top:12px;font-size:15px;color:var(--muted);line-height:1.7;border-top:1px solid var(--border);padding-top:12px}
+.fi.op .fa{display:block}
+
+/* footer */
+footer{border-top:1px solid var(--border);padding:28px 32px;text-align:center;color:var(--muted);font-size:12px;margin-top:48px;position:relative;z-index:1}
+footer .fl{font-family:var(--display);font-size:26px;background:linear-gradient(135deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+
+/* toast */
+#tst{position:fixed;bottom:24px;right:24px;z-index:999;background:rgba(255,77,109,.12);border:1px solid rgba(255,77,109,.3);border-radius:10px;padding:13px 18px;color:var(--danger);font-size:14px;max-width:320px;display:none;animation:fadeUp .3s ease}
+#tst.on{display:block}
+
+/* iOS tap fix */
+.card,.fi,.li,.nb,.rb1,.rb2,.tb,.ccta,.share-level-btn,.sp-btn{
+  -webkit-tap-highlight-color:transparent;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+@media(max-width:768px){
+  nav{padding:0 16px}
+  .hero,.sec-title,.bonus-pill,.sbar,.dpage,.hpage,.fpage{padding-left:16px;padding-right:16px}
+  .grid{padding:0 16px 24px}
+  .d2{grid-template-columns:1fr}
+  .egr{grid-template-columns:repeat(2,1fr)}
+  #nav-mid .nb:nth-child(n+3){display:none}
+  .bonus-pill-inner,.sbar-inner{border-radius:16px}
+  .bp-pct{font-size:clamp(22px,7vw,36px)}
+}
+@media(max-width:480px){
+  .grid{grid-template-columns:1fr}
+  .bonus-pill-inner,.sbar-inner{flex-wrap:wrap;border-radius:16px}
+  .bp-cell,.si{flex:0 0 50%}
+  .bp-cell+.bp-cell::before,.si+.si::before{display:none}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <button id="logo" onclick="go('levels')">
+    <div class="ic">⚡</div>
+    <div class="nm">FLASHSOL</div>
+  </button>
+  <div id="nav-mid">
+    <button class="nb on" data-p="levels"    id="n0">Levels</button>
+    <button class="nb"    data-p="how"       id="n1">How it works</button>
+    <button class="nb"    data-p="faq"       id="n2">FAQ</button>
+    <button class="nb"    data-p="dashboard" id="n3" style="display:none">Dashboard</button>
+  </div>
+  <div id="nav-r">
+    <div id="lw">
+      <button id="lb" onclick="toggleLM()">🇬🇧 EN ▾</button>
+      <div id="lm">
+        <div id="lm-grid">
+          <button class="li on" onclick="setL('EN')">🇬🇧 EN</button>
+          <button class="li"    onclick="setL('RU')">🇷🇺 RU</button>
+          <button class="li"    onclick="setL('ZH')">🇨🇳 ZH</button>
+          <button class="li"    onclick="setL('ES')">🇪🇸 ES</button>
+          <button class="li"    onclick="setL('PT')">🇧🇷 PT</button>
+          <button class="li"    onclick="setL('DE')">🇩🇪 DE</button>
+          <button class="li"    onclick="setL('AR')">🇸🇦 AR</button>
+          <button class="li"    onclick="setL('HI')">🇮🇳 HI</button>
+          <button class="li"    onclick="setL('FR')">🇫🇷 FR</button>
+        </div>
+      </div>
+    </div>
+    <button id="rfb" onclick="copyRef()">🔗 Ref link</button>
+    <button id="wb"  class="off" onclick="walletClick()">Connect Phantom</button>
+  </div>
+</nav>
+
+<div id="tk"><div class="tg">LIVE</div><div class="tt"><div class="ti" id="tki"></div></div></div>
+
+<div id="app">
+
+  <!-- LEVELS -->
+  <div class="pg on" id="pg-levels">
+    <div class="hero">
+      <h1><span class="g1" id="hw1">Earn at the</span><br><span class="g2" id="hw2">speed of light</span></h1>
+      <p id="hsub">Solana smart contract · Instant payouts · No middlemen</p>
+    </div>
+    <div class="sec-title"><h2 id="bonus-title-lbl">BONUS LEVELS</h2></div>
+    <div class="bonus-pill" id="bonus-pill-wrap"></div>
+    <div class="sbar"><div class="sbar-inner">
+      <div class="si"><span class="si-lbl" id="ss0">Network</span><span class="dot" style="margin:0 4px"></span><span class="si-val" style="color:var(--acc)">SOLANA</span></div>
+      <div class="si"><span class="si-lbl" id="ss1">Speed</span><span class="si-val">400ms</span></div>
+      <div class="si"><span class="si-lbl" id="ss2">Fee</span><span class="si-val">$0.001</span></div>
+      <div class="si"><span class="si-lbl" id="ss3">Stages</span><span class="si-val">4 Stages</span></div>
+      <div class="si"><span class="si-lbl" id="ss4">Min dep</span><span class="si-val">0.5 SOL</span></div>
+    </div></div>
+    <div class="sec-title"><h2 id="game-title-lbl">GAME LEVELS</h2></div>
+    <div class="grid" id="cards"></div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="pg" id="pg-dashboard">
+    <div class="lock" id="dlock">
+      <div class="li2">🔒</div>
+      <h3 id="dlt">Dashboard</h3>
+      <p id="dlp">Connect your wallet to open the dashboard</p>
+      <button onclick="walletClick()" id="dlb">Connect Phantom</button>
+    </div>
+    <div class="dpage" id="dcont" style="display:none">
+      <button id="rfbtn" onclick="loadUD()"><span id="rfi">⟳</span> <span id="upd-lbl">Refresh</span></button>
+      <div class="d2">
+        <div class="dc">
+          <div class="dlb" id="del">Your earnings</div>
+          <div style="margin-bottom:10px"><span id="ea">0.0000</span><span style="color:var(--muted);font-size:14px;margin-left:5px">SOL</span></div>
+          <div class="dss">
+            <div class="dsi"><div class="dl" id="dal">Active level</div><div class="dv" id="dav">—</div></div>
+            <div class="dsi"><div class="dl" id="drl">Referrals</div><div class="dv" id="drv" style="color:var(--acc2)">0</div></div>
+            <div class="dsi"><div class="dl" id="ddl">Deposited</div><div class="dv" id="ddv" style="color:var(--warn)">0 SOL</div></div>
+          </div>
+        </div>
+        <div class="rc">
+          <div class="rlb" id="rll">Ref link</div>
+          <!-- Минимальный уровень реферала -->
+          <div id="min-level-wrap" style="display:none">
+            <div class="min-level-badge" id="min-level-badge">⚡ Min level for referrals: —</div>
+          </div>
+          <!-- Шаринг по уровням -->
+          <div id="share-by-level" style="display:none">
+            <div style="font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);margin-bottom:8px" id="share-invite-lbl">Share invite link</div>
+            <div class="share-levels" id="share-levels-list"></div>
+          </div>
+          <!-- Стандартная ссылка (если нет уровня ещё) -->
+          <div id="rld-wrap">
+            <div id="rld">—</div>
+            <div class="rbs">
+              <button class="rb1" id="dcb" onclick="dashCopy()">📋 Copy</button>
+              <button class="rb2" onclick="dashShare()">Share ↗</button>
+            </div>
+          </div>
+          <div id="wi"><a id="wal" href="#" target="_blank">—</a><span id="wbl"></span></div>
+        </div>
+      </div>
+      <div id="eg">
+        <div class="et" id="egt">Earn per referral</div>
+        <div class="egr" id="egr"></div>
+      </div>
+      <div class="tabs">
+        <div class="tbar">
+          <button class="tb on" onclick="switchTab('r')" id="tbr">My referrals</button>
+          <button class="tb"    onclick="switchTab('h')" id="tbh">History</button>
+        </div>
+        <div class="tc">
+          <div class="tp on" id="tp-r"><div class="em" id="nor">No referrals yet</div></div>
+          <div class="tp"    id="tp-h"><div class="em" id="noh">No transactions yet</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW -->
+  <div class="pg" id="pg-how">
+    <div class="hpage">
+      <div class="ph2" id="howh">How it works</div>
+      <div class="sgrid" id="sg"></div>
+      <div class="tree">
+        <div class="trtitle" id="calc-title-lbl">Earnings calculator</div>
+        <div style="font-size:13px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-family:var(--mono);margin-bottom:10px" id="calc-my-level-lbl"></div>
+        <div id="calc-you-grid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:16px"></div>
+        <div style="text-align:center;margin-bottom:16px"><span class="youb" id="youb-txt">YOU</span></div>
+        <div style="font-size:13px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-family:var(--mono);margin-bottom:10px" id="calc-invite-lbl"></div>
+        <div id="calc-rows"></div>
+        <div style="border-top:1px solid var(--border);margin:16px 0"></div>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div>
+            <div class="trtitle" id="calc-total-lbl">Total earnings</div>
+            <div id="calc-total-val" style="font-size:34px;font-weight:700;font-family:var(--mono);color:var(--acc);letter-spacing:-.02em">0.000 SOL</div>
+            <div id="calc-total-sub" style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:3px"></div>
+          </div>
+          <div>
+            <div class="trtitle" id="calc-net-lbl" style="text-align:right">Friends in network</div>
+            <div id="calc-net-chart" style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;margin-top:6px"></div>
+          </div>
+        </div>
+        <div id="calc-breakdown" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:14px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="pg" id="pg-faq">
+    <div class="fpage">
+      <div class="ptag" style="color:var(--warn)">FAQ</div>
+      <div class="ph2">FAQ</div>
+      <div id="fl"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="fl">FLASHSOL</div>
+  <div id="fsub" style="margin-bottom:16px">Solana smart contract · Instant payouts · No middlemen</div>
+  <div style="width:100%;box-sizing:border-box;background:rgba(255,179,71,.05);border:1px solid rgba(255,179,71,.15);border-radius:10px;padding:14px 24px;font-size:10px;font-family:'Space Grotesk',sans-serif;color:#4a5a7a;line-height:1.75;text-align:left;margin-bottom:12px" id="footer-legal"></div>
+  <div style="font-size:9px;color:#2a3a5a;margin-top:6px" id="fcopy">© FlashSol</div>
+</footer>
+
+<div id="tst"></div>
+
+<script>
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║  FlashSol v6 — DEPLOYMENT CONFIGURATION                                  ║
+// ║  ОБЯЗАТЕЛЬНО заполнить перед деплоем:                                    ║
+// ║  1. PROJECT_WALLET — ваш Solana-адрес (base58) для получения выплат      ║
+// ║  2. API_URL        — URL бэкенда на Railway (после деплоя)               ║
+// ║  3. NETWORK        — devnet | mainnet-beta                               ║
+// ║  4. RPC_URL        — платный RPC в mainnet (Helius / QuickNode)          ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+const CFG = {
+  PROJECT_WALLET: '',        // ← ОБЯЗАТЕЛЬНО: ваш Solana-адрес
+  NETWORK:        'devnet',  // devnet | mainnet-beta
+  RPC_URL:        'https://api.devnet.solana.com',
+  API_URL:        '',        // ← ОБЯЗАТЕЛЬНО: 'https://YOUR-APP.railway.app'
+  LEVELS:[
+    {id:0,key:'starter',sol:.5, color:'#14F195',emoji:'🌱'},
+    {id:1,key:'basic',  sol:1,  color:'#9945FF',emoji:'⚡'},
+    {id:2,key:'pro',    sol:3,  color:'#a78bfa',emoji:'🔥'},
+    {id:3,key:'elite',  sol:10, color:'#ffb347',emoji:'👑'},
+  ],
+  REF_PCT:[30,20,10,5],
+};
+
+// ── Translations (9 languages) ────────────────────────────────────────────
+const LANG_FLAGS = {EN:'🇬🇧',RU:'🇷🇺',ZH:'🇨🇳',ES:'🇪🇸',PT:'🇧🇷',DE:'🇩🇪',AR:'🇸🇦',HI:'🇮🇳',FR:'🇫🇷'};
+
+const T={
+  RU:{hw1:'Зарабатывай',hw2:'со скоростью света',
+    sub:'Смарт-контракт Solana · Мгновенные выплаты · Без посредников',
+    s1:'Скорость',s2:'Комиссия',s3:'4 уровня',s4:'Мин. депозит',
+    conn:'Подключить кошелёк',disc:'Отключить',wait:'Подключение...',
+    ref:'Реф. ссылка',cp:'Скопировано ✓',
+    lv:['Стартер','Базовый','Про','Элит'],
+    ri:'Выплаты по уровням',dr:'Уровень 1',lr:'Уровень',
+    dep:'Депозит',bld:'Подготовка...',reg:'Регистрация...',snd:'Отправка...',
+    ok:'Успешно!',vtx:'Смотреть в Solscan ↗',err:'Ошибка',can:'Отменено',
+    ye:'Твой заработок',al:'Активный уровень',rf:'Друзей',td:'Внесено',
+    rl:'Реф. ссылка',cy:'Копировать',sh:'Поделиться ↗',
+    mr:'Мои друзья',th:'История транзакций',
+    nr:'Друзей пока нет',nt:'Транзакций пока нет',
+    ep:'Заработок с друга',upd:'Обновить',nl:'Нет уровня',
+    dt:'Кабинет',dp:'Подключи кошелёк чтобы открыть кабинет',
+    ht:'Как это работает',
+    minLevel:'Минимальный уровень для твоих друзей',
+    shareInvite:'Поделиться ссылкой для уровня',
+    lockedCard:'Недоступно — твой друг на уровне',
+    goAlone:'Начать самостоятельно',
+    goAloneConfirm:'Ты потеряешь привязку к другу навсегда. Уверен?',
+    lockedMsg:'Твой друг подключён на уровне {level}. Тебе доступны {level} и выше.\nНе готов? Ты можешь начать самостоятельно — с любого уровня от 0.5 SOL, без привязки к другу.',
+    messengers:'Мессенджеры',social:'Соцсети',
+    steps:[
+      {i:'🔗',t:'Подключи кошелёк',d:'Phantom или Solflare. Без регистрации.'},
+      {i:'💰',t:'Сделай депозит',d:'Выбери уровень и подтверди в Phantom.'},
+      {i:'⚡',t:'Получай выплаты',d:'до 30% с каждого друга — мгновенно.'},
+      {i:'📣',t:'Приглашай друзей',d:'4 уровня реферальной сети.'},
+      {i:'🔒',t:'Правило уровней',d:'Твой друг входит на уровень не ниже твоего. Не готов к дорогому уровню? Можно начать самостоятельно с любого уровня.'},
+    ],
+    rtn:'Сеть друзей',pd:'с депозита',you:'ВЫ',
+    calc_title:'Калькулятор заработка',calc_my_level:'Твой уровень депозита',
+    calc_invite:'Сколько друзей приглашает каждый участник',
+    calc_circle:['Уровень 1','Уровень 2','Уровень 3','Уровень 4'],
+    calc_you_invite:'Ты приглашаешь',calc_each_invites:'Каждый из {n} приглашает',
+    calc_friends_count:'Кол-во друзей',calc_dep_friends:'Депозит друзей',
+    calc_total:'Итого заработок',calc_net:'Друзей в сети',
+    calc_at:'при {n} друзьях в сети',calc_ppl:'чел.',
+    shareTexts:{
+      starter:'Приглашаю в FlashSol на уровень Стартер (0.5 SOL).\nМои друзья получают 30% с каждого приглашённого.\n👉 ',
+      basic:'Приглашаю в FlashSol на уровень Базовый (1 SOL).\nМои друзья получают 30% с каждого приглашённого.\n👉 ',
+      pro:'Приглашаю в FlashSol на уровень Про (3 SOL).\nМои друзья получают 30% с каждого приглашённого.\n👉 ',
+      elite:'Приглашаю в FlashSol на уровень Элит (10 SOL).\nМои друзья получают 30% с каждого приглашённого.\n👉 ',
+    },
+    faq:[
+      {q:'Безопасно ли это?',a:'Да. Контракт открытый — код проверяем на Solscan. Деньги не хранятся на контракте: распределяются мгновенно в момент депозита.'},
+      {q:'Как быстро приходят выплаты?',a:'Мгновенно. Solana обрабатывает транзакции за 400 миллисекунд.'},
+      {q:'Почему я не могу выбрать уровень ниже друга?',a:'Правило FlashSol: ты входишь на уровень не ниже того кто тебя пригласил. Если друг на Elite — тебе доступны только Elite. Это гарантирует что Elite-участники строят Elite-сеть. Не готов к дорогому уровню? Ты можешь начать самостоятельно с любого уровня от 0.5 SOL — без привязки к другу.'},
+      {q:'Сколько уровней в реферальной сети?',a:'4 уровня: 30% прямой друг, 20% его друг, 10% третий уровень, 5% четвёртый.'},
+      {q:'Нужна ли регистрация?',a:'Регистрация выполняется автоматически при первом депозите — один клик.'},
+    ],
+  },
+  EN:{hw1:'Earn at the',hw2:'speed of light',
+    sub:'Solana smart contract · Instant payouts · No middlemen',
+    s1:'Speed',s2:'Fee',s3:'Levels',s4:'Min deposit',
+    conn:'Connect wallet',disc:'Disconnect',wait:'Connecting...',
+    ref:'Ref link',cp:'Copied ✓',
+    lv:['Starter','Basic','Pro','Elite'],
+    ri:'Level payouts',dr:'Level 1',lr:'Level',
+    dep:'Deposit',bld:'Preparing...',reg:'Registering...',snd:'Sending...',
+    ok:'Success!',vtx:'View on Solscan ↗',err:'Error',can:'Cancelled',
+    ye:'Your earnings',al:'Active level',rf:'Friends',td:'Deposited',
+    rl:'Ref link',cy:'Copy',sh:'Share ↗',
+    mr:'My friends',th:'Transaction history',
+    nr:'No friends yet',nt:'No transactions yet',
+    ep:'Earn per friend',upd:'Refresh',nl:'No level',
+    dt:'Dashboard',dp:'Connect your wallet to open the dashboard',
+    ht:'How it works',
+    minLevel:'Min level for your friends',
+    shareInvite:'Share invite link for level',
+    lockedCard:'Locked — your friend is at level',
+    goAlone:'Start independently',
+    goAloneConfirm:'You will lose the connection to your friend forever. Are you sure?',
+    lockedMsg:'Your friend is connected at {level} level. Available levels: {level} and above.\nNot ready? You can start independently — from any level starting at 0.5 SOL, without being linked to your friend.',
+    messengers:'Messengers',social:'Social',
+    steps:[
+      {i:'🔗',t:'Connect wallet',d:'Phantom or Solflare. No signup.'},
+      {i:'💰',t:'Make a deposit',d:'Choose a level, confirm in Phantom.'},
+      {i:'⚡',t:'Get paid',d:'Up to 30% per friend — instantly.'},
+      {i:'📣',t:'Invite friends',d:'4-level deep referral network.'},
+      {i:'🔒',t:'Level rule',d:'Your friend joins at your level or higher. Not ready for an expensive level? They can start independently from any level.'},
+    ],
+    rtn:'Friend network',pd:'per deposit',you:'YOU',
+    calc_title:'Earnings calculator',calc_my_level:'Your deposit level',
+    calc_invite:'How many friends each participant invites',
+    calc_circle:['Level 1','Level 2','Level 3','Level 4'],
+    calc_you_invite:'You invite',calc_each_invites:'Each of {n} invites',
+    calc_friends_count:'Number of friends',calc_dep_friends:"Friends' deposit",
+    calc_total:'Total earnings',calc_net:'Friends in network',
+    calc_at:'with {n} friends in network',calc_ppl:'ppl',
+    shareTexts:{
+      starter:'Inviting you to FlashSol at Starter level (0.5 SOL).\nMy friends earn 30% of every invite.\n👉 ',
+      basic:'Inviting you to FlashSol at Basic level (1 SOL).\nMy friends earn 30% of every invite.\n👉 ',
+      pro:'Inviting you to FlashSol at Pro level (3 SOL).\nMy friends earn 30% of every invite.\n👉 ',
+      elite:'Inviting you to FlashSol at Elite level (10 SOL).\nMy friends earn 30% of every invite.\n👉 ',
+    },
+    faq:[
+      {q:'Is this safe?',a:'Yes. Open-source contract verifiable on Solscan. Funds are distributed instantly at deposit — never stored.'},
+      {q:'How fast are payouts?',a:'Instant. Solana processes in 400ms.'},
+      {q:"Why can't I choose a level below my friend's?",a:"FlashSol rule: you join at a level equal to or higher than the friend who invited you. If your friend is at Elite — only Elite is available to you. This ensures Elite participants build Elite networks. Not ready for an expensive level? You can start independently from any level starting at 0.5 SOL — without being linked to your friend."},
+      {q:'How many levels in the network?',a:'4 levels: 30% direct friend, 20% their friend, 10% third level, 5% fourth.'},
+      {q:'Do I need to register?',a:'Registration is done automatically on your first deposit — one click in Phantom.'},
+    ],
+  },
+  ZH:{hw1:'以光速',hw2:'赚钱',sub:'Solana智能合约 · 即时支付 · 无中间商',
+    s1:'速度',s2:'手续费',s3:'等级',s4:'最低存款',
+    conn:'连接钱包',disc:'断开',wait:'连接中...',ref:'邀请链接',cp:'已复制 ✓',
+    lv:['入门','基础','专业','精英'],ri:'等级收益',dr:'等级1',lr:'层级',
+    dep:'存款',bld:'准备中...',reg:'注册中...',snd:'发送中...',
+    ok:'成功！',vtx:'在Solscan查看 ↗',err:'错误',can:'已取消',
+    ye:'您的收益',al:'活跃等级',rf:'朋友',td:'存款',
+    rl:'邀请链接',cy:'复制',sh:'分享 ↗',mr:'我的朋友',th:'交易记录',
+    nr:'暂无朋友',nt:'暂无交易',ep:'每位朋友收益',upd:'刷新',nl:'无等级',
+    dt:'仪表盘',dp:'连接钱包以打开仪表盘',ht:'运作方式',
+    minLevel:'朋友最低级别',shareInvite:'分享邀请链接',lockedCard:'已锁定 — 您的朋友在级别',
+    goAlone:'独立开始',goAloneConfirm:'您将永久失去与朋友的绑定。确定吗？',
+    lockedMsg:'您的朋友在{level}级别。可用级别：{level}及以上。\n还没准备好？您可以独立从任意级别(0.5 SOL起)开始。',
+    messengers:'即时通讯',social:'社交媒体',
+    steps:[{i:'🔗',t:'连接钱包',d:'无需注册。'},{i:'💰',t:'存款',d:'选择等级确认。'},{i:'⚡',t:'获得报酬',d:'最高30%即时到账。'},{i:'📣',t:'邀请朋友',d:'4级网络。'},{i:'🔒',t:'级别规则',d:'朋友的级别不能低于您。没准备好？可独立从任意级别开始。'}],
+    rtn:'朋友网络',pd:'每笔存款',you:'您',
+    calc_title:'收益计算器',calc_my_level:'您的存款级别',calc_invite:'每位参与者邀请多少朋友',
+    calc_circle:['等级1','等级2','等级3','等级4'],calc_you_invite:'您邀请',calc_each_invites:'{n}人中每人邀请',
+    calc_friends_count:'朋友数量',calc_dep_friends:'朋友存款',calc_total:'总收益',calc_net:'网络中的朋友',
+    calc_at:'网络中共{n}位朋友',calc_ppl:'人',
+    shareTexts:{starter:'邀请您加入FlashSol入门级(0.5 SOL)。\n我的朋友获得每次邀请的30%。\n👉 ',basic:'邀请您加入FlashSol基础级(1 SOL)。\n👉 ',pro:'邀请您加入FlashSol专业级(3 SOL)。\n👉 ',elite:'邀请您加入FlashSol精英级(10 SOL)。\n👉 '},
+    faq:[{q:'这安全吗？',a:'是的。合约开源可在Solscan验证。'},{q:'付款多快？',a:'即时。400毫秒。'},{q:'为什么不能选低于朋友的级别？',a:'FlashSol规则：您的入场级别不能低于邀请您的朋友。没准备好？您可以独立从0.5 SOL的任意级别开始。'},{q:'有几个网络层级？',a:'4层：30%/20%/10%/5%。'},{q:'需要注册吗？',a:'首次存款自动完成注册。'}],
+  },
+  ES:{hw1:'Gana a la',hw2:'velocidad de la luz',sub:'Smart contract Solana · Pagos instantáneos',
+    s1:'Velocidad',s2:'Comisión',s3:'Niveles',s4:'Dep. mínimo',
+    conn:'Conectar billetera',disc:'Desconectar',wait:'Conectando...',ref:'Enlace invitación',cp:'Copiado ✓',
+    lv:['Iniciante','Básico','Pro','Elite'],ri:'Pagos por nivel',dr:'Nivel 1',lr:'Nivel',
+    dep:'Depósito',bld:'Preparando...',reg:'Registrando...',snd:'Enviando...',
+    ok:'¡Éxito!',vtx:'Ver en Solscan ↗',err:'Error',can:'Cancelado',
+    ye:'Tus ganancias',al:'Nivel activo',rf:'Amigos',td:'Depositado',
+    rl:'Enlace invitación',cy:'Copiar',sh:'Compartir ↗',mr:'Mis amigos',th:'Historial',
+    nr:'Sin amigos aún',nt:'Sin transacciones',ep:'Ganancia por amigo',upd:'Actualizar',nl:'Sin nivel',
+    dt:'Panel',dp:'Conecta tu billetera para abrir el panel',ht:'Cómo funciona',
+    minLevel:'Nivel mínimo para tus amigos',shareInvite:'Compartir enlace de invitación',lockedCard:'Bloqueado — tu amigo está en nivel',
+    goAlone:'Empezar independientemente',goAloneConfirm:'Perderás la conexión con tu amigo para siempre. ¿Estás seguro?',
+    lockedMsg:'Tu amigo está en nivel {level}. Niveles disponibles: {level} y superiores.\n¿No estás listo? Puedes empezar independientemente desde cualquier nivel a partir de 0.5 SOL.',
+    messengers:'Mensajería',social:'Redes sociales',
+    steps:[{i:'🔗',t:'Conecta billetera',d:'Sin registro.'},{i:'💰',t:'Haz un depósito',d:'Confirma en Phantom.'},{i:'⚡',t:'Recibe pagos',d:'Hasta 30% al instante.'},{i:'📣',t:'Invita amigos',d:'4 niveles.'},{i:'🔒',t:'Regla de niveles',d:'Tu amigo entra a tu nivel o superior. ¿No preparado? Puede empezar independientemente.'}],
+    rtn:'Red de amigos',pd:'por depósito',you:'TÚ',
+    calc_title:'Calculadora de ganancias',calc_my_level:'Tu nivel de depósito',calc_invite:'Cuántos amigos invita cada participante',
+    calc_circle:['Nivel 1','Nivel 2','Nivel 3','Nivel 4'],calc_you_invite:'Tú invitas',calc_each_invites:'Cada uno de {n} invita',
+    calc_friends_count:'Cantidad de amigos',calc_dep_friends:'Depósito de amigos',calc_total:'Ganancias totales',calc_net:'Amigos en la red',
+    calc_at:'con {n} amigos en la red',calc_ppl:'pers.',
+    shareTexts:{starter:'Te invito a FlashSol nivel Iniciante (0.5 SOL).\nMis amigos ganan 30% de cada invitación.\n👉 ',basic:'Te invito a FlashSol nivel Básico (1 SOL).\n👉 ',pro:'Te invito a FlashSol nivel Pro (3 SOL).\n👉 ',elite:'Te invito a FlashSol nivel Elite (10 SOL).\n👉 '},
+    faq:[{q:'¿Es seguro?',a:'Sí. Contrato open-source en Solscan.'},{q:'¿Qué tan rápidos?',a:'Instantáneos. 400ms.'},{q:'¿Por qué no puedo elegir un nivel inferior al amigo?',a:'Regla FlashSol: entras en un nivel igual o superior al amigo que te invitó. ¿No estás listo? Puedes empezar independientemente desde cualquier nivel a partir de 0.5 SOL.'},{q:'¿Cuántos niveles?',a:'4 niveles: 30%/20%/10%/5%.'},{q:'¿Registro?',a:'Automático en el primer depósito.'}],
+  },
+  PT:{hw1:'Ganhe na',hw2:'velocidade da luz',sub:'Contrato Solana · Pagamentos instantâneos',
+    s1:'Velocidade',s2:'Taxa',s3:'Níveis',s4:'Dep. mínimo',
+    conn:'Conectar carteira',disc:'Desconectar',wait:'Conectando...',ref:'Link convite',cp:'Copiado ✓',
+    lv:['Iniciante','Básico','Pro','Elite'],ri:'Pagamentos',dr:'Nível 1',lr:'Nível',
+    dep:'Depósito',bld:'Preparando...',reg:'Registrando...',snd:'Enviando...',
+    ok:'Sucesso!',vtx:'Ver no Solscan ↗',err:'Erro',can:'Cancelado',
+    ye:'Seus ganhos',al:'Nível ativo',rf:'Amigos',td:'Depositado',
+    rl:'Link convite',cy:'Copiar',sh:'Compartilhar ↗',mr:'Meus amigos',th:'Histórico',
+    nr:'Sem amigos ainda',nt:'Sem transações',ep:'Ganho por amigo',upd:'Atualizar',nl:'Sem nível',
+    dt:'Painel',dp:'Conecte sua carteira para abrir o painel',ht:'Como funciona',
+    minLevel:'Nível mínimo para seus amigos',shareInvite:'Compartilhar link de convite',lockedCard:'Bloqueado — seu amigo está no nível',
+    goAlone:'Começar independentemente',goAloneConfirm:'Você perderá a conexão com seu amigo para sempre. Tem certeza?',
+    lockedMsg:'Seu amigo está no nível {level}. Níveis disponíveis: {level} e acima.\nNão está pronto? Você pode começar independentemente a partir de qualquer nível de 0.5 SOL.',
+    messengers:'Mensageiros',social:'Redes sociais',
+    steps:[{i:'🔗',t:'Conecte a carteira',d:'Sem cadastro.'},{i:'💰',t:'Faça um depósito',d:'Confirme no Phantom.'},{i:'⚡',t:'Receba pagamentos',d:'Até 30% instantâneo.'},{i:'📣',t:'Convide amigos',d:'4 níveis.'},{i:'🔒',t:'Regra de níveis',d:'Seu amigo entra no seu nível ou acima. Não pronto? Pode começar independentemente.'}],
+    rtn:'Rede de amigos',pd:'por depósito',you:'VOCÊ',
+    calc_title:'Calculadora de ganhos',calc_my_level:'Seu nível de depósito',calc_invite:'Quantos amigos cada participante convida',
+    calc_circle:['Nível 1','Nível 2','Nível 3','Nível 4'],calc_you_invite:'Você convida',calc_each_invites:'Cada um dos {n} convida',
+    calc_friends_count:'Quantidade de amigos',calc_dep_friends:'Depósito dos amigos',calc_total:'Ganhos totais',calc_net:'Amigos na rede',
+    calc_at:'com {n} amigos na rede',calc_ppl:'pess.',
+    shareTexts:{starter:'Convido você ao FlashSol nível Iniciante (0.5 SOL).\nMeus amigos ganham 30% de cada convite.\n👉 ',basic:'Convido você ao FlashSol nível Básico (1 SOL).\n👉 ',pro:'Convido você ao FlashSol nível Pro (3 SOL).\n👉 ',elite:'Convido você ao FlashSol nível Elite (10 SOL).\n👉 '},
+    faq:[{q:'É seguro?',a:'Sim. Contrato open-source no Solscan.'},{q:'Quão rápidos?',a:'Instantâneos. 400ms.'},{q:'Por que não posso escolher nível abaixo do amigo?',a:'Regra FlashSol: você entra em nível igual ou superior ao amigo que te convidou. Não está pronto? Você pode começar independentemente a partir de qualquer nível de 0.5 SOL.'},{q:'Quantos níveis?',a:'4 níveis: 30%/20%/10%/5%.'},{q:'Preciso me cadastrar?',a:'Não. Automático no primeiro depósito.'}],
+  },
+  DE:{hw1:'Verdiene mit',hw2:'Lichtgeschwindigkeit',sub:'Solana Smart Contract · Sofortige Auszahlungen',
+    s1:'Geschwindigkeit',s2:'Gebühr',s3:'Ebenen',s4:'Min. Einzahlung',
+    conn:'Wallet verbinden',disc:'Trennen',wait:'Verbinde...',ref:'Einladungslink',cp:'Kopiert ✓',
+    lv:['Starter','Basis','Pro','Elite'],ri:'Auszahlungen',dr:'Ebene 1',lr:'Ebene',
+    dep:'Einzahlung',bld:'Vorbereitung...',reg:'Registrierung...',snd:'Sende...',
+    ok:'Erfolg!',vtx:'Auf Solscan ansehen ↗',err:'Fehler',can:'Abgebrochen',
+    ye:'Deine Einnahmen',al:'Aktives Level',rf:'Freunde',td:'Eingezahlt',
+    rl:'Einladungslink',cy:'Kopieren',sh:'Teilen ↗',mr:'Meine Freunde',th:'Transaktionshistorie',
+    nr:'Noch keine Freunde',nt:'Noch keine Transaktionen',ep:'Verdienst pro Freund',upd:'Aktualisieren',nl:'Kein Level',
+    dt:'Dashboard',dp:'Verbinde deine Wallet um das Dashboard zu öffnen',ht:'So funktioniert es',
+    minLevel:'Mindest-Level für deine Freunde',shareInvite:'Einladungslink teilen',lockedCard:'Gesperrt — dein Freund ist auf Level',
+    goAlone:'Unabhängig starten',goAloneConfirm:'Du verlierst die Verbindung zu deinem Freund für immer. Bist du sicher?',
+    lockedMsg:'Dein Freund ist auf {level}-Level. Verfügbare Level: {level} und höher.\nNoch nicht bereit? Du kannst unabhängig ab beliebigem Level ab 0,5 SOL starten.',
+    messengers:'Messenger',social:'Soziale Netzwerke',
+    steps:[{i:'🔗',t:'Wallet verbinden',d:'Keine Registrierung.'},{i:'💰',t:'Einzahlung machen',d:'In Phantom bestätigen.'},{i:'⚡',t:'Zahlungen erhalten',d:'Bis zu 30% sofort.'},{i:'📣',t:'Freunde einladen',d:'4-stufiges Netzwerk.'},{i:'🔒',t:'Level-Regel',d:'Dein Freund steigt auf deinem Level oder höher ein. Nicht bereit? Kann unabhängig starten.'}],
+    rtn:'Freundesnetzwerk',pd:'pro Einzahlung',you:'DU',
+    calc_title:'Einnahmen-Rechner',calc_my_level:'Dein Einzahlungslevel',calc_invite:'Wie viele Freunde lädt jeder ein',
+    calc_circle:['Ebene 1','Ebene 2','Ebene 3','Ebene 4'],calc_you_invite:'Du lädst ein',calc_each_invites:'Jeder der {n} lädt ein',
+    calc_friends_count:'Anzahl der Freunde',calc_dep_friends:'Einzahlung der Freunde',calc_total:'Gesamteinnahmen',calc_net:'Freunde im Netzwerk',
+    calc_at:'bei {n} Freunden im Netzwerk',calc_ppl:'Pers.',
+    shareTexts:{starter:'Ich lade dich zu FlashSol Starter-Level ein (0.5 SOL).\nMeine Freunde verdienen 30% pro Einladung.\n👉 ',basic:'Ich lade dich zu FlashSol Basis-Level ein (1 SOL).\n👉 ',pro:'Ich lade dich zu FlashSol Pro-Level ein (3 SOL).\n👉 ',elite:'Ich lade dich zu FlashSol Elite-Level ein (10 SOL).\n👉 '},
+    faq:[{q:'Ist das sicher?',a:'Ja. Open-Source auf Solscan prüfbar.'},{q:'Wie schnell?',a:'Sofort. 400ms.'},{q:'Warum kein Level unter dem Freund?',a:'FlashSol-Regel: Du steigst auf dem Level deines einladenden Freundes oder höher ein. Nicht bereit? Du kannst unabhängig ab beliebigem Level ab 0,5 SOL starten.'},{q:'Wie viele Ebenen?',a:'4 Ebenen: 30%/20%/10%/5%.'},{q:'Registrierung nötig?',a:'Nein. Automatisch beim ersten Einzahlen.'}],
+  },
+  AR:{hw1:'اكسب بسرعة',hw2:'الضوء',sub:'عقد ذكي Solana · مدفوعات فورية · بدون وسطاء',
+    s1:'السرعة',s2:'الرسوم',s3:'المستويات',s4:'الحد الأدنى',
+    conn:'توصيل المحفظة',disc:'قطع الاتصال',wait:'جارٍ الاتصال...',ref:'رابط الدعوة',cp:'تم النسخ ✓',
+    lv:['مبتدئ','أساسي','محترف','نخبة'],ri:'عوائد المستوى',dr:'المستوى 1',lr:'المستوى',
+    dep:'إيداع',bld:'جارٍ التحضير...',reg:'جارٍ التسجيل...',snd:'جارٍ الإرسال...',
+    ok:'نجح!',vtx:'عرض على Solscan ↗',err:'خطأ',can:'ملغى',
+    ye:'أرباحك',al:'المستوى النشط',rf:'الأصدقاء',td:'المودع',
+    rl:'رابط الدعوة',cy:'نسخ',sh:'مشاركة ↗',mr:'أصدقائي',th:'سجل المعاملات',
+    nr:'لا أصدقاء بعد',nt:'لا معاملات بعد',ep:'الأرباح لكل صديق',upd:'تحديث',nl:'لا مستوى',
+    dt:'لوحة التحكم',dp:'وصّل محفظتك لفتح لوحة التحكم',ht:'كيف يعمل',
+    minLevel:'الحد الأدنى لمستوى أصدقائك',shareInvite:'مشاركة رابط الدعوة',lockedCard:'مقفل — صديقك في المستوى',
+    goAlone:'البدء بشكل مستقل',goAloneConfirm:'ستفقد الارتباط بصديقك للأبد. هل أنت متأكد؟',
+    lockedMsg:'صديقك في مستوى {level}. المستويات المتاحة: {level} وما فوق.\nلست مستعداً؟ يمكنك البدء بشكل مستقل من أي مستوى ابتداءً من 0.5 SOL.',
+    messengers:'المراسلة',social:'الشبكات الاجتماعية',
+    steps:[{i:'🔗',t:'وصّل المحفظة',d:'بدون تسجيل.'},{i:'💰',t:'أودع',d:'اختر المستوى وأكد في Phantom.'},{i:'⚡',t:'احصل على الدفع',d:'حتى 30% فورياً.'},{i:'📣',t:'ادعُ أصدقاء',d:'شبكة 4 مستويات.'},{i:'🔒',t:'قاعدة المستويات',d:'يدخل صديقك بمستواك أو أعلى. غير مستعد؟ يمكنه البدء بشكل مستقل.'}],
+    rtn:'شبكة الأصدقاء',pd:'لكل إيداع',you:'أنت',
+    calc_title:'حاسبة الأرباح',calc_my_level:'مستوى إيداعك',calc_invite:'كم صديقاً يدعو كل مشارك',
+    calc_circle:['المستوى 1','المستوى 2','المستوى 3','المستوى 4'],calc_you_invite:'أنت تدعو',calc_each_invites:'كل {n} يدعو',
+    calc_friends_count:'عدد الأصدقاء',calc_dep_friends:'إيداع الأصدقاء',calc_total:'إجمالي الأرباح',calc_net:'الأصدقاء في الشبكة',
+    calc_at:'مع {n} أصدقاء في الشبكة',calc_ppl:'شخص',
+    shareTexts:{starter:'أدعوك إلى FlashSol المستوى المبتدئ (0.5 SOL).\nأصدقائي يكسبون 30% من كل دعوة.\n👉 ',basic:'أدعوك إلى FlashSol المستوى الأساسي (1 SOL).\n👉 ',pro:'أدعوك إلى FlashSol المستوى المحترف (3 SOL).\n👉 ',elite:'أدعوك إلى FlashSol المستوى النخبة (10 SOL).\n👉 '},
+    faq:[{q:'هل هذا آمن؟',a:'نعم. العقد مفتوح المصدر على Solscan.'},{q:'ما سرعة الدفع؟',a:'فوري. 400 مللي ثانية.'},{q:'لماذا لا يمكن اختيار مستوى أدنى من الصديق؟',a:'قاعدة FlashSol: تدخل بمستوى مساوٍ أو أعلى من الصديق الذي دعاك. غير مستعد؟ يمكنك البدء بشكل مستقل من أي مستوى ابتداءً من 0.5 SOL.'},{q:'كم مستوى في الشبكة؟',a:'4 مستويات: 30%/20%/10%/5%.'},{q:'هل أحتاج للتسجيل؟',a:'لا. يتم تلقائياً عند أول إيداع.'}],
+  },
+  HI:{hw1:'प्रकाश की गति से',hw2:'कमाएं',sub:'Solana स्मार्ट कॉन्ट्रैक्ट · तत्काल भुगतान · बिना बिचौलियों के',
+    s1:'गति',s2:'शुल्क',s3:'स्तर',s4:'न्यूनतम जमा',
+    conn:'वॉलेट कनेक्ट करें',disc:'डिस्कनेक्ट',wait:'कनेक्ट हो रहा है...',ref:'आमंत्रण लिंक',cp:'कॉपी हो गया ✓',
+    lv:['स्टार्टर','बेसिक','प्रो','एलीट'],ri:'स्तर भुगतान',dr:'स्तर 1',lr:'स्तर',
+    dep:'जमा',bld:'तैयारी हो रही है...',reg:'पंजीकरण हो रहा है...',snd:'भेजा जा रहा है...',
+    ok:'सफल!',vtx:'Solscan पर देखें ↗',err:'त्रुटि',can:'रद्द',
+    ye:'आपकी कमाई',al:'सक्रिय स्तर',rf:'दोस्त',td:'जमा',
+    rl:'आमंत्रण लिंक',cy:'कॉपी करें',sh:'शेयर करें ↗',mr:'मेरे दोस्त',th:'लेनदेन इतिहास',
+    nr:'अभी कोई दोस्त नहीं',nt:'अभी कोई लेनदेन नहीं',ep:'प्रति दोस्त कमाई',upd:'रिफ्रेश',nl:'कोई स्तर नहीं',
+    dt:'डैशबोर्ड',dp:'डैशबोर्ड खोलने के लिए वॉलेट कनेक्ट करें',ht:'यह कैसे काम करता है',
+    minLevel:'आपके दोस्तों के लिए न्यूनतम स्तर',shareInvite:'आमंत्रण लिंक शेयर करें',lockedCard:'लॉक — आपके दोस्त का स्तर है',
+    goAlone:'स्वतंत्र रूप से शुरू करें',goAloneConfirm:'आप अपने दोस्त से कनेक्शन हमेशा के लिए खो देंगे। क्या आप सुनिश्चित हैं?',
+    lockedMsg:'आपके दोस्त का स्तर {level} है। उपलब्ध स्तर: {level} और ऊपर।\nतैयार नहीं? आप 0.5 SOL से किसी भी स्तर से स्वतंत्र रूप से शुरू कर सकते हैं।',
+    messengers:'मैसेंजर',social:'सोशल नेटवर्क',
+    steps:[{i:'🔗',t:'वॉलेट कनेक्ट करें',d:'बिना पंजीकरण के।'},{i:'💰',t:'जमा करें',d:'Phantom में कन्फर्म करें।'},{i:'⚡',t:'भुगतान पाएं',d:'30% तक तुरंत।'},{i:'📣',t:'दोस्तों को आमंत्रित करें',d:'4-स्तरीय नेटवर्क।'},{i:'🔒',t:'स्तर नियम',d:'आपके दोस्त आपके स्तर या उससे ऊपर जुड़ते हैं। तैयार नहीं? स्वतंत्र रूप से शुरू कर सकते हैं।'}],
+    rtn:'दोस्तों का नेटवर्क',pd:'प्रति जमा',you:'आप',
+    calc_title:'कमाई कैलकुलेटर',calc_my_level:'आपका जमा स्तर',calc_invite:'प्रत्येक भागीदार कितने दोस्तों को आमंत्रित करता है',
+    calc_circle:['स्तर 1','स्तर 2','स्तर 3','स्तर 4'],calc_you_invite:'आप आमंत्रित करते हैं',calc_each_invites:'{n} में से प्रत्येक आमंत्रित करता है',
+    calc_friends_count:'दोस्तों की संख्या',calc_dep_friends:'दोस्तों की जमा',calc_total:'कुल कमाई',calc_net:'नेटवर्क में दोस्त',
+    calc_at:'{n} दोस्तों के साथ नेटवर्क में',calc_ppl:'लोग',
+    shareTexts:{starter:'FlashSol स्टार्टर स्तर (0.5 SOL) पर आमंत्रित कर रहा हूं।\nमेरे दोस्त हर आमंत्रण पर 30% कमाते हैं।\n👉 ',basic:'FlashSol बेसिक स्तर (1 SOL) पर आमंत्रित कर रहा हूं।\n👉 ',pro:'FlashSol प्रो स्तर (3 SOL) पर आमंत्रित कर रहा हूं।\n👉 ',elite:'FlashSol एलीट स्तर (10 SOL) पर आमंत्रित कर रहा हूं।\n👉 '},
+    faq:[{q:'क्या यह सुरक्षित है?',a:'हां। Solscan पर ओपन-सोर्स कॉन्ट्रैक्ट।'},{q:'भुगतान कितनी तेज़ी से होता है?',a:'तुरंत। 400ms।'},{q:'दोस्त से नीचे का स्तर क्यों नहीं चुन सकते?',a:'FlashSol नियम: आप उस दोस्त के स्तर के बराबर या ऊंचे स्तर पर प्रवेश करते हैं जिसने आपको आमंत्रित किया। तैयार नहीं? आप 0.5 SOL से किसी भी स्तर से स्वतंत्र रूप से शुरू कर सकते हैं।'},{q:'नेटवर्क में कितने स्तर?',a:'4 स्तर: 30%/20%/10%/5%।'},{q:'पंजीकरण जरूरी है?',a:'नहीं। पहली जमा पर स्वचालित।'}],
+  },
+  FR:{hw1:'Gagne à la',hw2:'vitesse de la lumière',sub:'Contrat intelligent Solana · Paiements instantanés · Sans intermédiaires',
+    s1:'Vitesse',s2:'Frais',s3:'Niveaux',s4:'Dépôt min.',
+    conn:'Connecter portefeuille',disc:'Déconnecter',wait:'Connexion...',ref:'Lien invitation',cp:'Copié ✓',
+    lv:['Débutant','Basique','Pro','Élite'],ri:'Paiements par niveau',dr:'Niveau 1',lr:'Niveau',
+    dep:'Dépôt',bld:'Préparation...',reg:'Inscription...',snd:'Envoi...',
+    ok:'Succès !',vtx:'Voir sur Solscan ↗',err:'Erreur',can:'Annulé',
+    ye:'Tes gains',al:'Niveau actif',rf:'Amis',td:'Déposé',
+    rl:'Lien invitation',cy:'Copier',sh:'Partager ↗',mr:'Mes amis',th:'Historique',
+    nr:'Aucun ami encore',nt:'Aucune transaction',ep:'Gain par ami',upd:'Actualiser',nl:'Aucun niveau',
+    dt:'Tableau de bord',dp:'Connecte ton portefeuille pour ouvrir le tableau de bord',ht:'Comment ça marche',
+    minLevel:'Niveau minimum pour tes amis',shareInvite:"Partager le lien d'invitation",lockedCard:'Verrouillé — ton ami est au niveau',
+    goAlone:'Commencer indépendamment',goAloneConfirm:"Tu perdras le lien avec ton ami pour toujours. Tu es sûr ?",
+    lockedMsg:"Ton ami est au niveau {level}. Niveaux disponibles : {level} et au-dessus.\nPas prêt ? Tu peux commencer indépendamment à partir de n'importe quel niveau dès 0,5 SOL.",
+    messengers:'Messageries',social:'Réseaux sociaux',
+    steps:[{i:'🔗',t:'Connecte le portefeuille',d:'Sans inscription.'},{i:'💰',t:'Fais un dépôt',d:'Confirme dans Phantom.'},{i:'⚡',t:'Reçois des paiements',d:"Jusqu'à 30% instantanément."},{i:'📣',t:'Invite des amis',d:'Réseau à 4 niveaux.'},{i:'🔒',t:'Règle des niveaux',d:"Ton ami entre à ton niveau ou au-dessus. Pas prêt ? Peut commencer indépendamment."}],
+    rtn:"Réseau d'amis",pd:'par dépôt',you:'TOI',
+    calc_title:'Calculatrice de gains',calc_my_level:'Ton niveau de dépôt',calc_invite:"Combien d'amis chaque participant invite",
+    calc_circle:['Niveau 1','Niveau 2','Niveau 3','Niveau 4'],calc_you_invite:'Tu invites',calc_each_invites:'Chacun des {n} invite',
+    calc_friends_count:"Nombre d'amis",calc_dep_friends:'Dépôt des amis',calc_total:'Gains totaux',calc_net:'Amis dans le réseau',
+    calc_at:'avec {n} amis dans le réseau',calc_ppl:'pers.',
+    shareTexts:{starter:"Je t'invite sur FlashSol niveau Débutant (0.5 SOL).\nMes amis gagnent 30% de chaque invitation.\n👉 ",basic:"Je t'invite sur FlashSol niveau Basique (1 SOL).\n👉 ",pro:"Je t'invite sur FlashSol niveau Pro (3 SOL).\n👉 ",elite:"Je t'invite sur FlashSol niveau Élite (10 SOL).\n👉 "},
+    faq:[{q:'Est-ce sécurisé ?',a:'Oui. Contrat open-source sur Solscan.'},{q:'Quelle est la rapidité ?',a:'Instantané. 400ms.'},{q:"Pourquoi pas de niveau inférieur à l'ami ?",a:"Règle FlashSol : tu entres à un niveau égal ou supérieur à l'ami qui t'a invité. Pas prêt ? Tu peux commencer indépendamment à partir de n'importe quel niveau dès 0,5 SOL."},{q:'Combien de niveaux ?',a:'4 niveaux : 30%/20%/10%/5%.'},{q:'Inscription nécessaire ?',a:'Non. Automatique au premier dépôt.'}],
+  },
+};
+
+// Два блока: мессенджеры и соцсети
+const SHARE_PLATFORMS = {
+  messengers: [
+    {id:'tg', label:'Telegram', color:'#2AABEE', bg:'rgba(42,171,238,.12)',  logo:'https://e7.pngegg.com/pngimages/127/603/png-clipart-paper-plane-origami-illustration-telegram-logo-telegram-icon-blue-angle-thumbnail.png'},
+    {id:'wa', label:'WhatsApp', color:'#25D366', bg:'rgba(37,211,102,.12)',  logo:'https://e7.pngegg.com/pngimages/1006/83/png-clipart-whatsapp-computer-icons-android-whatsapp-cdr-logo-thumbnail.png'},
+    {id:'vb', label:'Viber',    color:'#7360F2', bg:'rgba(115,96,242,.12)', logo:'https://e7.pngegg.com/pngimages/1005/458/png-clipart-viber-icon-viber-whatsapp-symbian-viber-purple-telephone-call.png'},
+    {id:'wc', label:'WeChat',   color:'#07C160', bg:'rgba(7,193,96,.12)',   logo:'https://e7.pngegg.com/pngimages/8/824/png-clipart-wechat-china-mobile-phones-wechat-pay-text-logo-thumbnail.png'},
+  ],
+  social: [
+    {id:'fb', label:'Facebook', color:'#1877F2', bg:'rgba(24,119,242,.12)', logo:'https://e7.pngegg.com/pngimages/286/412/png-clipart-facebook-scalable-graphics-icon-facebook-logo-facebook-logo-blue-logo-thumbnail.png'},
+    {id:'th', label:'Threads',  color:'#dde4f0', bg:'rgba(255,255,255,.08)',logo:'https://upload.wikimedia.org/wikipedia/commons/d/db/Threads_%28app%29.png'},
+    {id:'rd', label:'Reddit',   color:'#FF4500', bg:'rgba(255,69,0,.12)',   logo:'https://e7.pngegg.com/pngimages/612/982/png-clipart-reddit-logo-youtube-dressed-smiley-desktop-wallpaper-thumbnail.png'},
+    {id:'rn', label:'RedNote',  color:'#FE2C55', bg:'rgba(254,44,85,.12)',  logo:'https://static.cdnlogo.com/logos/r/40/rednote-xiaohongshu_thumb.png'},
+  ],
+};
+
+const S = {
+  lang: localStorage.getItem('fsl_l') || 'EN',
+  addr: null, bal: null, connected: false,
+  ud: null, txs: [], txst: {},
+  sponsorLevel: null, // уровень спонсора (null = нет ограничений)
+};
+const t  = ()=>T[S.lang]||T.EN;
+const sc = s=>`https://solscan.io/tx/${s}${CFG.NETWORK==='devnet'?'?cluster=devnet':''}`;
+const sa = a=>`https://solscan.io/account/${a}${CFG.NETWORK==='devnet'?'?cluster=devnet':''}`;
+const sh = a=>a?a.slice(0,4)+'...'+a.slice(-4):'';
+const COLS=['var(--acc)','var(--acc2)','#a78bfa','var(--warn)'];
+
+function getWallet(){
+  return window.phantom?.solana||window.solana||window.solflare||window.backpack||window.glow||window.coin98||null;
+}
+
+// ── Language ──────────────────────────────────────────────────────────────
+function toggleLM(){document.getElementById('lm').classList.toggle('open');}
+function closeLM(e){if(!document.getElementById('lw').contains(e.target))document.getElementById('lm').classList.remove('open');}
+document.addEventListener('click',closeLM);
+document.addEventListener('touchstart',closeLM,{passive:true});
+
+function setL(c){
+  S.lang=c;localStorage.setItem('fsl_l',c);
+  document.getElementById('lm').classList.remove('open');
+  applyLang();renderCards();renderHow();renderFaq();renderDash();
+}
+
+function applyLang(){
+  const l=t();
+  const s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  // Флаг + код на кнопке
+  const lbEl=document.getElementById('lb');
+  if(lbEl)lbEl.textContent=(LANG_FLAGS[S.lang]||'🌐')+' '+S.lang+' ▾';
+  // Подсвечиваем активный язык
+  document.querySelectorAll('.li').forEach(el=>{
+    const code=el.getAttribute('onclick')?.match(/'([A-Z]+)'/)?.[1];
+    el.classList.toggle('on',code===S.lang);
+  });
+  const navL={
+    RU:['Уровни','Как работает','FAQ','Кабинет'],
+    EN:['Levels','How it works','FAQ','Dashboard'],
+    ZH:['等级','运作方式','FAQ','仪表盘'],
+    ES:['Niveles','Cómo funciona','FAQ','Panel'],
+    PT:['Níveis','Como funciona','FAQ','Painel'],
+    DE:['Levels','So funktioniert es','FAQ','Dashboard'],
+    AR:['المستويات','كيف يعمل','FAQ','لوحة التحكم'],
+    HI:['स्तर','यह कैसे काम करता है','FAQ','डैशबोर्ड'],
+    FR:['Niveaux','Comment ça marche','FAQ','Tableau de bord'],
+  }[S.lang]||['Levels','How','FAQ','Dashboard'];
+  s('n0',navL[0]);s('n1',navL[1]);s('n2',navL[2]);s('n3',navL[3]);
+  s('hw1',l.hw1);s('hw2',l.hw2);s('hsub',l.sub);s('fsub',l.sub);
+  s('rfb','🔗 '+l.ref);
+  const wb=document.getElementById('wb');
+  if(S.connected)wb.textContent=sh(S.addr)+' · '+l.disc;
+  else wb.textContent=l.conn;
+  s('del',l.ye);s('dal',l.al);s('drl',l.rf);s('ddl',l.td);s('rll',l.rl);
+  s('dcb','📋 '+l.cy);s('tbr',l.mr);s('tbh',l.th);
+  s('nor',l.nr);s('noh',l.nt);s('upd-lbl',l.upd);
+  s('dlt',l.dt);s('dlp',l.dp);s('dlb',l.conn);
+  s('howh',l.ht);
+  const bonusTitles={RU:'БОНУСНЫЕ УРОВНИ',EN:'BONUS LEVELS',ZH:'奖励等级',ES:'NIVELES DE BONO',PT:'NÍVEIS DE BÔNUS',DE:'BONUS-EBENEN',AR:'مستويات المكافأة',HI:'बोनस स्तर',FR:'NIVEAUX BONUS'};
+  const gameTitles={RU:'ИГРОВЫЕ УРОВНИ',EN:'GAME LEVELS',ZH:'游戏级别',ES:'NIVELES DE JUEGO',PT:'NÍVEIS DO JOGO',DE:'SPIELEBENEN',AR:'مستويات اللعبة',HI:'गेम स्तर',FR:'NIVEAUX DE JEU'};
+  s('bonus-title-lbl',bonusTitles[S.lang]||bonusTitles.EN);
+  s('game-title-lbl',gameTitles[S.lang]||gameTitles.EN);
+  const statLbls={RU:['СКОРОСТЬ','КОМИССИЯ','УРОВНИ','МИН. ДЕПОЗИТ'],EN:['SPEED','FEE','STAGES','MIN DEP'],ZH:['速度','手续费','等级','最低存款'],ES:['VELOCIDAD','COMISIÓN','NIVELES','DEP. MÍN'],PT:['VELOCIDADE','TAXA','NÍVEIS','DEP. MÍN'],DE:['TEMPO','GEBÜHR','EBENEN','MIN. EIN'],AR:['السرعة','الرسوم','المستويات','الحد الأدنى'],HI:['गति','शुल्क','स्तर','न्यूनतम'],FR:['VITESSE','FRAIS','NIVEAUX','DÉP. MIN']};
+  const sl=statLbls[S.lang]||statLbls.EN;
+  s('ss1',sl[0]);s('ss2',sl[1]);s('ss3',sl[2]);s('ss4',sl[3]);
+  updateFooterLegal();
+}
+
+// ── Footer ────────────────────────────────────────────────────────────────
+function updateFooterLegal(){
+  const e=(id,html)=>{const el=document.getElementById(id);if(el)el.innerHTML=html;};
+  const disc={
+    EN:`<strong style="color:#6a7a9a;font-size:9px;letter-spacing:.1em;text-transform:uppercase">⚠ LEGAL DISCLAIMER</strong><br><br>FlashSol is a decentralized referral program on the Solana blockchain and <strong style="color:#8090b0">is not an investment instrument, security, or financial product</strong>. Participation does not guarantee any income or return of funds. All contributions are voluntary and non-refundable.<br><br>Crypto assets are volatile. You may lose your funds.<br><br><strong style="color:#8090b0">Use is permitted only for persons aged 18+</strong> in jurisdictions where such activity is not prohibited.`,
+    RU:`<strong style="color:#6a7a9a;font-size:9px;letter-spacing:.1em;text-transform:uppercase">⚠ ПРАВОВОЙ ДИСКЛЕЙМЕР</strong><br><br>FlashSol является децентрализованной реферальной программой на блокчейне Solana и <strong style="color:#8090b0">не является инвестиционным инструментом, ценной бумагой или финансовым продуктом</strong>. Участие не гарантирует дохода или возврата средств. Все взносы добровольны и безвозвратны.<br><br>Криптовалютные активы волатильны. Вы можете потерять вложенные средства.<br><br><strong style="color:#8090b0">Использование разрешено только лицам 18+ лет</strong>.`,
+    ZH:`<strong style="color:#6a7a9a;font-size:9px;letter-spacing:.1em;text-transform:uppercase">⚠ 法律免责声明</strong><br><br>FlashSol是Solana区块链上的去中心化推荐计划，<strong style="color:#8090b0">不是投资工具</strong>。参与不保证收入或资金返还。<br><br>加密资产具有波动性。<strong style="color:#8090b0">仅允许18岁以上人士使用</strong>。`,
+    ES:`<strong style="color:#6a7a9a;font-size:9px;letter-spacing:.1em;text-transform:uppercase">⚠ AVISO LEGAL</strong><br><br>FlashSol es un programa de referidos descentralizado en Solana y <strong style="color:#8090b0">no es un instrumento de inversión</strong>. La participación no garantiza ingresos. <strong style="color:#8090b0">Solo para mayores de 18 años.</strong>`,
+    PT:`<strong style="color:#6a7a9a;font-size:9px;letter-spacing:.1em;text-transform:uppercase">⚠ AVISO LEGAL</strong><br><br>FlashSol é um programa de indicação descentralizado na Solana e <strong style="color:#8090b0">não é um instrumento de investimento</strong>. <strong style="color:#8090b0">Apenas para maiores de 18 anos.</strong>`,
+    DE:`<strong style="color:#6a7a9a;font-size:9px;letter-spacing:.1em;text-transform:uppercase">⚠ RECHTLICHER HINWEIS</strong><br><br>FlashSol ist ein dezentrales Empfehlungsprogramm auf Solana und <strong style="color:#8090b0">kein Anlageinstrument</strong>. <strong style="color:#8090b0">Nur für Personen ab 18 Jahren.</strong>`,
+    AR:`<strong style="color:#6a7a9a;font-size:9px;letter-spacing:.1em;text-transform:uppercase">⚠ إخلاء المسؤولية القانونية</strong><br><br>FlashSol برنامج إحالة لامركزي على Solana و<strong style="color:#8090b0">ليس أداة استثمار</strong>. المشاركة لا تضمن دخلاً. <strong style="color:#8090b0">للأشخاص الذين تزيد أعمارهم عن 18 عاماً فقط.</strong>`,
+    HI:`<strong style="color:#6a7a9a;font-size:9px;letter-spacing:.1em;text-transform:uppercase">⚠ कानूनी अस्वीकरण</strong><br><br>FlashSol Solana पर एक विकेंद्रीकृत रेफरल प्रोग्राम है और <strong style="color:#8090b0">कोई निवेश साधन नहीं है</strong>। <strong style="color:#8090b0">केवल 18+ वर्ष के व्यक्तियों के लिए।</strong>`,
+    FR:`<strong style="color:#6a7a9a;font-size:9px;letter-spacing:.1em;text-transform:uppercase">⚠ AVERTISSEMENT LÉGAL</strong><br><br>FlashSol est un programme de parrainage décentralisé sur Solana et <strong style="color:#8090b0">n'est pas un instrument d'investissement</strong>. <strong style="color:#8090b0">Réservé aux personnes de 18 ans et plus.</strong>`,
+  };
+  const copies={
+    EN:'© FlashSol · By participating you confirm you are 18+ and have read the disclaimer',
+    RU:'© FlashSol · Участвуя, вы подтверждаете что вам 18+ лет и вы ознакомились с дисклеймером',
+    ZH:'© FlashSol · 参与即表示您已年满18岁',
+    ES:'© FlashSol · Al participar confirma que tiene 18+ años',
+    PT:'© FlashSol · Ao participar confirma que tem 18+ anos',
+    DE:'© FlashSol · Mit der Teilnahme bestätigen Sie 18+ Jahre',
+    AR:'© FlashSol · بالمشاركة تؤكد أن عمرك 18+',
+    HI:'© FlashSol · भाग लेकर आप 18+ होने की पुष्टि करते हैं',
+    FR:'© FlashSol · En participant vous confirmez avoir 18+ ans',
+  };
+  e('footer-legal',disc[S.lang]||disc.EN);
+  const fcopy=document.getElementById('fcopy');if(fcopy)fcopy.textContent=copies[S.lang]||copies.EN;
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────
+function go(p){
+  document.querySelectorAll('.pg').forEach(el=>el.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(el=>el.classList.remove('on'));
+  const pg=document.getElementById('pg-'+p);if(pg)pg.classList.add('on');
+  const nb=document.querySelector('[data-p="'+p+'"]');if(nb)nb.classList.add('on');
+  if(p==='dashboard'){renderDash();}
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.nb').forEach(b=>b.addEventListener('click',()=>go(b.dataset.p)));
+
+// ── Cards ─────────────────────────────────────────────────────────────────
+function renderCards(){
+  const l=t();
+  const g=document.getElementById('cards');g.innerHTML='';
+  const PCOLS=['#14F195','#9945FF','#ffb347','#ff4d6d'];
+  const PLBLS=l.calc_circle||['LVL 1','LVL 2','LVL 3','LVL 4'];
+  const wrap=document.getElementById('bonus-pill-wrap');
+  if(wrap){
+    wrap.innerHTML='<div class="bonus-pill-inner">'+
+      CFG.REF_PCT.map((pct,i)=>`<div class="bp-cell"><div class="bp-pct" style="color:${PCOLS[i]}">${pct}%</div><div class="bp-lbl">${PLBLS[i]}</div></div>`).join('')+
+    '</div>';
+  }
+  CFG.LEVELS.forEach(lv=>{
+    const c=lv.color,nm=l.lv[lv.id];
+    const ts=S.txst[lv.id];
+    const isAct=S.ud&&S.ud.activeLevel===lv.id;
+    // Проверяем доступность уровня (правило v6: >= уровня спонсора)
+    const isLocked=S.sponsorLevel!==null&&lv.id<S.sponsorLevel;
+    const rows=CFG.REF_PCT.map((pct,j)=>{
+      const lbl=j===0?l.dr:l.lr+' '+(j+1);
+      const amt=(lv.sol*pct/100).toFixed(3);
+      const op=['22','18','12','0e'][j];
+      return`<div class="pr"><div class="prl"><div class="prn" style="background:${c}${op};border:1px solid ${c}44;color:${c}">${j+1}</div><span class="prlb">${lbl}</span></div><div><span class="prv" style="color:${c}">+${amt}</span><span class="prs">SOL</span></div></div>`;
+    }).join('');
+    let cta='';
+    if(isLocked){
+      const sponsorName=l.lv[S.sponsorLevel]||S.sponsorLevel;
+      cta=`<div class="cst" style="color:var(--danger);font-size:12px">🔒 ${l.lockedCard||'Locked'}: ${sponsorName}</div>`;
+    }else if(ts){
+      const busy=ts.status==='bld'||ts.status==='reg'||ts.status==='snd';
+      const msg={bld:l.bld,reg:l.reg,snd:l.snd,ok:l.ok,err:l.err+': '+(ts.e||''),can:l.can}[ts.status]||'';
+      const col=ts.status==='ok'?'var(--acc)':ts.status==='err'?'var(--danger)':'var(--muted)';
+      const lnk=ts.status==='ok'&&ts.sig?`<a href="${sc(ts.sig)}" target="_blank">${l.vtx}</a>`:'';
+      cta=`<div class="cst" style="color:${col}">${busy?'<span class="spin">⟳</span>':''}${msg}${lnk}</div>`;
+    }else{
+      const ctxt=S.connected?l.dep+' →':l.conn+' →';
+      cta=`<div class="ccta" style="background:${c}18;border:1px solid ${c}33;color:${c}">${ctxt}</div>`;
+    }
+    const d=document.createElement('div');
+    d.className='card'+(isLocked?' locked':'');
+    d.setAttribute('role','button');d.setAttribute('tabindex','0');
+    if(isAct)d.style.cssText=`border-color:${c}55;background:${c}08;box-shadow:0 0 20px ${c}15`;
+    if(!isLocked)d.onclick=()=>doDeposit(lv.id);
+    const badge=isLocked?`<span class="lkbadge">🔒 ${l.lv[S.sponsorLevel]||''}</span>`:isAct?'<span class="abadge">ACTIVE</span>':'';
+    d.innerHTML=`
+      <div class="ch">
+        <div class="cie">
+          <div class="cic" style="background:${c}18;border:1px solid ${c}33">${lv.emoji}</div>
+          <div>
+            <div class="cn" style="color:${c}">${nm}</div>
+            <div class="cs">${lv.sol}<span>SOL</span></div>
+          </div>
+        </div>
+        ${badge}
+      </div>
+      <div class="cpays"><div class="cpays-title">${l.ri}</div>${rows}</div>
+      ${cta}
+      ${isLocked?`<div style="margin-top:10px"><button onclick="goAlone(event)" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:10px;cursor:pointer;color:var(--muted);font-size:12px;font-family:'Space Grotesk',sans-serif;transition:all .15s" onmouseover="this.style.color='#dde4f0'" onmouseout="this.style.color='var(--muted)'">${l.goAlone||'Start independently'} →</button></div>`:''}
+    `;
+    g.appendChild(d);
+  });
+}
+
+// ── How / Calc ────────────────────────────────────────────────────────────
+function renderHow(){
+  const l=t();
+  const sg=document.getElementById('sg');sg.innerHTML='';
+  l.steps.forEach((s,i)=>{
+    const d=document.createElement('div');d.className='sc';
+    d.innerHTML=`<span class="sn">0${i+1}</span><div class="si2">${s.i}</div><div class="st" style="color:${COLS[i]}">${s.t}</div><div class="sd">${s.d}</div>`;
+    sg.appendChild(d);
+  });
+  renderCalc();
+}
+
+function renderCalc(){
+  if(!window._CS)window._CS={myLv:0,refs:[{each:3,dep:0},{each:3,dep:0},{each:3,dep:0},{each:3,dep:0}]};
+  const CS=window._CS,LCOLS=['#14F195','#9945FF','#ffb347','#ff4d6d'],PCTS=[30,20,10,5];
+  function getPeople(){const p=[];for(let i=0;i<4;i++)p.push(i===0?CS.refs[0].each:p[i-1]*CS.refs[i].each);return p;}
+  function draw(){
+    const l=t(),circles=l.calc_circle||['L1','L2','L3','L4'];
+    const yg=document.getElementById('calc-you-grid');if(!yg)return;
+    yg.innerHTML='';
+    CFG.LEVELS.forEach((lv,i)=>{
+      const active=CS.myLv===i;
+      const b=document.createElement('div');
+      b.style.cssText=`padding:12px 6px;border:${active?'1.5px':'1px'} solid ${active?lv.color+'99':'rgba(255,255,255,.07)'};border-radius:11px;background:${active?lv.color+'1a':'rgba(255,255,255,.02)'};cursor:pointer;text-align:center;transition:all .18s`;
+      b.innerHTML=`<div style="font-size:16px;margin-bottom:4px">${lv.emoji}</div><div style="font-size:12px;font-weight:700;font-family:var(--mono);color:${active?lv.color:'#dde4f0'}">${lv.sol} SOL</div>`;
+      b.onclick=()=>{CS.myLv=i;draw();};
+      yg.appendChild(b);
+    });
+    const md=CFG.LEVELS[CS.myLv];
+    const yb=document.getElementById('youb-txt');if(yb){yb.textContent=(l.you||'YOU')+' · '+md.sol+' SOL';yb.style.background=md.color;}
+    const cml=document.getElementById('calc-my-level-lbl');if(cml)cml.textContent=l.calc_my_level||'';
+    const cil=document.getElementById('calc-invite-lbl');if(cil)cil.textContent=l.calc_invite||'';
+    const ctl=document.getElementById('calc-title-lbl');if(ctl)ctl.textContent=l.calc_title||'';
+    const cnl=document.getElementById('calc-net-lbl');if(cnl)cnl.textContent=l.calc_net||'';
+    const ctol=document.getElementById('calc-total-lbl');if(ctol)ctol.textContent=l.calc_total||'';
+    const people=getPeople();
+    const rows=document.getElementById('calc-rows');if(!rows)return;
+    rows.innerHTML='';
+    let total=0;const results=[];
+    CS.refs.forEach((s,i)=>{
+      const cnt=people[i];
+      // Учитываем правило v6: депозит реферала >= уровня "меня" (CS.myLv)
+      const minDep=Math.max(s.dep,CS.myLv);
+      const dv=CFG.LEVELS[minDep]||CFG.LEVELS[0];
+      const earn=cnt*(dv.sol*PCTS[i]/100);
+      total+=earn;results.push({earn,count:cnt,sol:dv.sol});
+      const prevLbl=i===0?(l.calc_you_invite||'You invite'):(l.calc_each_invites||'Each of {n} invites').replace('{n}',people[i-1]);
+      const div=document.createElement('div');
+      div.style.cssText='background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:14px;margin-bottom:8px';
+      div.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="display:flex;align-items:center"><span style="font-size:15px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-family:var(--mono);color:${LCOLS[i]}">${circles[i]}</span><span style="font-size:14px;color:var(--muted);font-family:var(--mono);margin-left:9px">${PCTS[i]}% · ${cnt} ${l.calc_ppl||'ppl'}</span></div><span style="font-size:22px;font-weight:700;font-family:var(--mono);color:${LCOLS[i]}">+${earn.toFixed(3)} SOL</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start"><div><div style="font-size:13px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-family:var(--mono);margin-bottom:7px">${prevLbl}</div><div style="display:flex;align-items:center;gap:8px"><input type="range" min="1" max="50" value="${CS.refs[i].each}" step="1" id="cr${i}" style="-webkit-appearance:none;flex:1;height:3px;border-radius:2px;outline:none;cursor:pointer;background:linear-gradient(to right,${LCOLS[i]} ${(CS.refs[i].each-1)/49*100}%,rgba(255,255,255,.08) ${(CS.refs[i].each-1)/49*100}%)"><span style="font-size:18px;font-weight:700;font-family:var(--mono);color:${LCOLS[i]};min-width:22px">${CS.refs[i].each}</span></div><div style="display:inline-block;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:5px 12px;font-size:14px;font-family:var(--mono);color:var(--muted);margin-top:7px">= ${cnt} ${l.calc_ppl||'ppl'}</div></div><div><div style="font-size:13px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-family:var(--mono);margin-bottom:7px">${l.calc_dep_friends||'Deposit'}</div><div style="display:flex;gap:4px;flex-wrap:wrap" id="cdb${i}"></div></div></div>`;
+      rows.appendChild(div);
+      const inp=document.getElementById('cr'+i);if(inp)inp.oninput=function(){CS.refs[i].each=parseInt(this.value);draw();};
+      const dbDiv=document.getElementById('cdb'+i);
+      if(dbDiv)CFG.LEVELS.forEach((dv2,di)=>{
+        // Показываем только уровни >= моего уровня (правило v6)
+        const available=di>=CS.myLv;
+        if(!available)return;
+        const act=minDep===di;
+        const b=document.createElement('button');
+        b.style.cssText=`padding:7px 12px;border:${act?'1.5px':'1px'} solid ${act?dv2.color+'66':'rgba(255,255,255,.07)'};border-radius:8px;background:${act?dv2.color+'1a':'transparent'};color:${act?dv2.color:'var(--muted)'};font-size:14px;font-weight:700;font-family:var(--mono);cursor:pointer;transition:all .15s`;
+        b.textContent=dv2.emoji+' '+dv2.sol;
+        b.onclick=()=>{CS.refs[i].dep=di;draw();};
+        dbDiv.appendChild(b);
+      });
+    });
+    const tv=document.getElementById('calc-total-val');if(tv)tv.textContent=total.toFixed(3)+' SOL';
+    const totalPpl=people.reduce((s,p)=>s+p,0);
+    const ts=document.getElementById('calc-total-sub');if(ts)ts.textContent=(l.calc_at||'with {n} friends').replace('{n}',totalPpl);
+    const chart=document.getElementById('calc-net-chart');
+    if(chart){chart.innerHTML='';const maxP=Math.max(...people);people.forEach((p,i)=>{const w=Math.max(10,Math.round(p/maxP*110));const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:6px';row.innerHTML=`<span style="font-size:13px;font-family:var(--mono);color:${LCOLS[i]};min-width:56px;text-align:right">${circles[i]}</span><div style="width:${w}px;height:6px;border-radius:3px;background:rgba(255,255,255,.06)"><div style="width:100%;height:6px;border-radius:3px;background:${LCOLS[i]}"></div></div><span style="font-size:13px;font-family:var(--mono);color:${LCOLS[i]};min-width:72px;text-align:right">${p} ${l.calc_ppl||'ppl'}</span>`;chart.appendChild(row);});}
+    const bd=document.getElementById('calc-breakdown');
+    if(bd){bd.innerHTML='';results.forEach((r,i)=>{const c=document.createElement('div');c.style.cssText='background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:10px 6px;text-align:center';c.innerHTML=`<div style="font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);margin-bottom:6px">${circles[i]}</div><div style="font-size:18px;font-weight:700;font-family:var(--mono);color:${LCOLS[i]}">${r.earn.toFixed(3)}</div><div style="font-size:12px;color:var(--muted);font-family:var(--mono);margin-top:3px">${r.count} ${l.calc_ppl||'ppl'} · ${r.sol} SOL</div>`;bd.appendChild(c);});}
+  }
+  draw();
+}
+
+function renderFaq(){
+  const fl=document.getElementById('fl');fl.innerHTML='';
+  t().faq.forEach(f=>{
+    const d=document.createElement('div');d.className='fi';
+    d.setAttribute('role','button');d.setAttribute('tabindex','0');
+    d.innerHTML=`<div class="fq"><span>${f.q}</span><span class="fqic">+</span></div><div class="fa">${f.a}</div>`;
+    d.onclick=()=>d.classList.toggle('op');
+    fl.appendChild(d);
+  });
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────
+function setWUI(){
+  const l=t(),wb=document.getElementById('wb');
+  if(S.connected){
+    wb.textContent=sh(S.addr)+' · '+l.disc;wb.className='on';wb.disabled=false;
+    document.getElementById('rfb').style.display='block';
+    document.getElementById('n3').style.display='';
+    document.getElementById('dlock').style.display='none';
+    document.getElementById('dcont').style.display='block';
+    updWInfo();
+  }else{
+    wb.textContent=l.conn;wb.className='off';wb.disabled=false;
+    document.getElementById('rfb').style.display='none';
+    document.getElementById('n3').style.display='none';
+    document.getElementById('dlock').style.display='';
+    document.getElementById('dcont').style.display='none';
+  }
+}
+
+function renderDash(){
+  const l=t(),ud=S.ud;
+  const safe=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  safe('ea',ud?(parseFloat(ud.totalEarnedSol||ud.totalEarned||0)).toFixed(4):'0.0000');
+  const dav=document.getElementById('dav');
+  if(dav){
+    if(ud&&ud.activeLevel!=null){
+      const lv=CFG.LEVELS[ud.activeLevel];
+      dav.innerHTML=`<span style="background:${lv.color}18;border:1px solid ${lv.color}33;border-radius:5px;padding:2px 7px;color:${lv.color};font-size:11px;font-weight:700">${lv.emoji} ${l.lv[lv.id]}</span>`;
+      showEarnGrid(lv);
+      renderShareByLevel(lv);
+    }else{
+      dav.textContent=l.nl;
+      const eg=document.getElementById('eg');if(eg)eg.style.display='none';
+      renderShareDefault();
+    }
+  }
+  safe('drv',ud?String(ud.referralCount):'0');
+  safe('ddv',ud?(parseFloat(ud.totalDepositedSol).toFixed(3)+' SOL'):'0 SOL');
+  if(S.bal!==null)safe('wbl',S.bal+' SOL');
+  updWInfo();renderTxTab();renderReferralsTab();
+}
+
+// ── Share by level ────────────────────────────────────────────────────────
+function renderShareByLevel(activeLv){
+  const l=t();
+  const minLevelWrap=document.getElementById('min-level-wrap');
+  const shareByLevel=document.getElementById('share-by-level');
+  const rldWrap=document.getElementById('rld-wrap');
+
+  if(minLevelWrap){
+    minLevelWrap.style.display='block';
+    const badge=document.getElementById('min-level-badge');
+    if(badge)badge.textContent=`⚡ ${l.minLevel||'Min level for friends'}: ${activeLv.emoji} ${l.lv[activeLv.id]} (${activeLv.sol} SOL)`;
+  }
+  if(rldWrap)rldWrap.style.display='none';
+  if(shareByLevel)shareByLevel.style.display='block';
+
+  const list=document.getElementById('share-levels-list');
+  if(!list)return;
+  list.innerHTML='';
+
+  CFG.LEVELS.filter(lv=>lv.id>=activeLv.id).forEach(lv=>{
+    const url=getRefUrl(lv.id);
+    const shareText=(l.shareTexts||{})[lv.key]||`FlashSol ${l.lv[lv.id]} ${lv.sol} SOL\n👉 `;
+    const fullText=shareText+url;
+
+    const wrap=document.createElement('div');
+    wrap.style.cssText='background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px 14px;margin-bottom:6px';
+
+    const header=document.createElement('div');
+    header.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:10px';
+    header.innerHTML=`<span style="font-weight:700;color:${lv.color};font-family:var(--mono);font-size:13px">${lv.emoji} ${l.lv[lv.id]} · ${lv.sol} SOL</span><button onclick="copyRefLevel(${lv.id})" style="background:${lv.color}18;border:1px solid ${lv.color}33;border-radius:7px;padding:5px 10px;color:${lv.color};font-size:11px;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif" id="copy-lv-${lv.id}">📋 ${l.cy||'Copy'}</button>`;
+    wrap.appendChild(header);
+
+    // Два блока платформ
+    const platformsWrap=document.createElement('div');
+    platformsWrap.className='share-platforms-wrap';
+
+    // Мессенджеры
+    const msgGroup=document.createElement('div');
+    const msgLbl=document.createElement('div');
+    msgLbl.className='share-platforms-group-lbl';
+    msgLbl.textContent=l.messengers||'Messengers';
+    const msgGrid=document.createElement('div');
+    msgGrid.className='share-platforms';
+    SHARE_PLATFORMS.messengers.forEach(p=>{
+      const btn=document.createElement('button');
+      btn.className='sp-btn';
+      btn.style.cssText=`background:${p.bg};border:1px solid ${p.color}33;color:${p.color}`;
+      btn.innerHTML=`<img src="${p.logo}" alt="${p.label}" onerror="this.style.display='none'"><span>${p.label}</span>`;
+      btn.onclick=()=>shareToplatform(p.id,fullText,url);
+      msgGrid.appendChild(btn);
+    });
+    msgGroup.appendChild(msgLbl);
+    msgGroup.appendChild(msgGrid);
+    platformsWrap.appendChild(msgGroup);
+
+    // Соцсети
+    const socGroup=document.createElement('div');
+    const socLbl=document.createElement('div');
+    socLbl.className='share-platforms-group-lbl';
+    socLbl.style.marginTop='6px';
+    socLbl.textContent=l.social||'Social';
+    const socGrid=document.createElement('div');
+    socGrid.className='share-platforms';
+    SHARE_PLATFORMS.social.forEach(p=>{
+      const btn=document.createElement('button');
+      btn.className='sp-btn';
+      btn.style.cssText=`background:${p.bg};border:1px solid ${p.color}33;color:${p.color}`;
+      btn.innerHTML=`<img src="${p.logo}" alt="${p.label}" onerror="this.style.display='none'"><span>${p.label}</span>`;
+      btn.onclick=()=>shareToplatform(p.id,fullText,url);
+      socGrid.appendChild(btn);
+    });
+    socGroup.appendChild(socLbl);
+    socGroup.appendChild(socGrid);
+    platformsWrap.appendChild(socGroup);
+
+    wrap.appendChild(platformsWrap);
+    list.appendChild(wrap);
+  });
+}
+
+function renderShareDefault(){
+  // Стандартный блок для пользователей без депозита
+  const minLevelWrap=document.getElementById('min-level-wrap');
+  const shareByLevel=document.getElementById('share-by-level');
+  const rldWrap=document.getElementById('rld-wrap');
+  if(minLevelWrap)minLevelWrap.style.display='none';
+  if(shareByLevel)shareByLevel.style.display='none';
+  if(rldWrap){rldWrap.style.display='block';document.getElementById('rld').textContent=getRefUrl();}
+}
+
+function copyRefLevel(levelId){
+  const url=getRefUrl(levelId);
+  navigator.clipboard?.writeText(url);
+  const btn=document.getElementById('copy-lv-'+levelId);
+  if(btn){const orig=btn.innerHTML;btn.innerHTML=t().cp;setTimeout(()=>btn.innerHTML=orig,2000);}
+}
+
+function shareToplatform(platform,text,url){
+  const enc=encodeURIComponent;
+  const urls={
+    tg:`https://t.me/share/url?url=${enc(url)}&text=${enc(text)}`,
+    wa:`https://wa.me/?text=${enc(text)}`,
+    vb:`viber://forward?text=${enc(text)}`,
+    fb:`https://www.facebook.com/sharer/sharer.php?u=${enc(url)}`,
+    rd:`https://www.reddit.com/submit?url=${enc(url)}&title=${enc('FlashSol')}`,
+    th:`https://www.threads.net/intent/post?text=${enc(text)}`,
+    wc:`weixin://dl/posts`,  // WeChat нет прямого web share — копируем
+    rn:`https://www.xiaohongshu.com/`,  // RedNote нет прямого share — копируем
+  };
+  if(platform==='wc'||platform==='rn'){
+    navigator.clipboard?.writeText(text);
+    toast(t().cp||'Copied!');
+    return;
+  }
+  const shareUrl=urls[platform];
+  if(shareUrl)window.open(shareUrl,'_blank','noopener,noreferrer');
+}
+
+function getRefUrl(levelId){
+  const base=location.origin+location.pathname+'?ref='+(S.addr||'');
+  return levelId!==undefined?base+'&level='+CFG.LEVELS[levelId].key:base;
+}
+
+function copyRef(){
+  if(!S.addr)return;
+  navigator.clipboard?.writeText(getRefUrl());
+  const b=document.getElementById('rfb');b.classList.add('cp');b.textContent=t().cp;
+  setTimeout(()=>{b.classList.remove('cp');b.textContent='🔗 '+t().ref;},2200);
+}
+function dashCopy(){
+  navigator.clipboard?.writeText(getRefUrl());
+  const b=document.getElementById('dcb');b.classList.add('cp');b.textContent=t().cp;
+  setTimeout(()=>{b.classList.remove('cp');b.textContent='📋 '+t().cy;},2200);
+}
+function dashShare(){if(navigator.share)navigator.share({url:getRefUrl(),title:'FlashSol'}).catch(()=>dashCopy());else dashCopy();}
+
+function updWInfo(){
+  if(!S.addr)return;
+  const wal=document.getElementById('wal');wal.textContent=sh(S.addr)+' ↗';wal.href=sa(S.addr);
+  if(S.bal!==null)document.getElementById('wbl').textContent=S.bal+' SOL';
+  document.getElementById('rld').textContent=getRefUrl();
+}
+
+function showEarnGrid(lv){
+  const l=t(),eg=document.getElementById('eg');eg.style.display='block';
+  document.getElementById('egt').textContent=l.ep+' · '+lv.emoji+' '+l.lv[lv.id]+' ('+lv.sol+' SOL)';
+  const row=document.getElementById('egr');row.innerHTML='';
+  CFG.REF_PCT.forEach((pct,i)=>{
+    const lbl=i===0?l.dr:l.lr+' '+(i+1);
+    const c=document.createElement('div');c.className='ec';
+    c.innerHTML=`<div class="el">${lbl}</div><div class="ev" style="color:${COLS[i]}">+${(lv.sol*pct/100).toFixed(3)}</div><div class="es">SOL · ${pct}%</div>`;
+    row.appendChild(c);
+  });
+}
+
+function renderTxTab(){
+  const pane=document.getElementById('tp-h'),l=t();
+  if(!S.txs.length){pane.innerHTML=`<div class="em">${l.nt}</div>`;return;}
+  pane.innerHTML='<table class="dt"><thead><tr><th>TX</th><th>Status</th><th>Date</th></tr></thead><tbody>'+
+    S.txs.map(tx=>`<tr>
+      <td><a href="${sc(tx.sig)}" target="_blank" style="color:var(--acc2);text-decoration:none;font-family:var(--mono);font-size:10px">${tx.sig.slice(0,6)}...${tx.sig.slice(-4)} ↗</a></td>
+      <td><span class="${tx.ok?'tok':'terr'}">${tx.ok?'✓ OK':'✗ ERR'}</span></td>
+      <td style="font-family:var(--mono);font-size:9px;color:var(--muted)">${tx.date}</td>
+    </tr>`).join('')+'</tbody></table>';
+}
+
+function renderReferralsTab(){
+  const pane=document.getElementById('tp-r'),l=t();
+  if(!S.referrals||!S.referrals.length){pane.innerHTML=`<div class="em">${l.nr}</div>`;return;}
+  pane.innerHTML='<table class="dt"><thead><tr><th>Wallet</th><th>Level</th><th>Date</th></tr></thead><tbody>'+
+    S.referrals.map(r=>{
+      const lv=r.activeLevel!=null?CFG.LEVELS[r.activeLevel]:null;
+      return`<tr>
+        <td style="font-family:var(--mono);font-size:11px;color:var(--muted)">${sh(r.wallet)}</td>
+        <td>${lv?`<span style="color:${lv.color};font-weight:700;font-size:12px">${lv.emoji} ${l.lv[lv.id]}</span>`:'—'}</td>
+        <td style="font-family:var(--mono);font-size:9px;color:var(--muted)">${r.registeredAt?new Date(r.registeredAt).toLocaleDateString():'—'}</td>
+      </tr>`;
+    }).join('')+'</tbody></table>';
+}
+
+function switchTab(id){
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.tp').forEach(p=>p.classList.remove('on'));
+  document.getElementById('tp-'+id).classList.add('on');
+  document.getElementById('tb'+id).classList.add('on');
+}
+
+// ── Wallet ────────────────────────────────────────────────────────────────
+function walletClick(){S.connected?wdisc():wconn();}
+async function wconn(){
+  const w=getWallet();
+  if(!w){
+    const msgs={EN:'No Solana wallet found. Install Phantom (phantom.app).',RU:'Не обнаружен Solana-кошелёк. Установите Phantom.',ZH:'未检测到钱包。请安装Phantom。',ES:'No se detectó billetera. Instala Phantom.',PT:'Carteira não encontrada. Instale Phantom.',DE:'Keine Wallet gefunden. Phantom installieren.',AR:'لم يتم العثور على محفظة. ثبّت Phantom.',HI:'वॉलेट नहीं मिला। Phantom इंस्टॉल करें।',FR:'Aucun portefeuille trouvé. Installez Phantom.'};
+    toast(msgs[S.lang]||msgs.EN);
+    setTimeout(()=>window.open('https://phantom.app','_blank'),1500);
+    return;
+  }
+  document.getElementById('wb').textContent=t().wait;
+  document.getElementById('wb').className='wait';
+  document.getElementById('wb').disabled=true;
+  try{
+    const r=await w.connect();
+    S.addr=r.publicKey.toString();S.connected=true;
+    if(w.on){
+      try{w.on('disconnect',wdisc);}catch(e){}
+      try{w.on('accountChanged',pk=>{if(pk){S.addr=pk.toString();getbal();setWUI();loadUD();}else wdisc();});}catch(e){}
+    }
+    await getbal();setWUI();go('dashboard');loadUD();
+  }catch(e){
+    document.getElementById('wb').className='off';
+    document.getElementById('wb').disabled=false;
+    setWUI();
+    if(!e.message?.includes('User rejected')&&!e.message?.includes('cancelled'))toast(e.message||'Connection failed');
+  }
+}
+function wdisc(){
+  try{const w=getWallet();w?.disconnect();}catch(e){}
+  S.connected=false;S.addr=null;S.bal=null;S.ud=null;S.txs=[];S.txst={};S.sponsorLevel=null;S.referrals=[];
+  setWUI();renderCards();renderDash();
+  if(document.getElementById('pg-dashboard').classList.contains('on'))go('levels');
+}
+async function getbal(){
+  if(!S.addr||!CFG.RPC_URL)return;
+  try{
+    const r=await fetch(CFG.RPC_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getBalance',params:[S.addr]})});
+    const j=await r.json();if(j.result)S.bal=+(j.result.value/1e9).toFixed(4);
+  }catch(e){}
+}
+
+// ── User data (from backend API v6) ──────────────────────────────────────
+async function loadUD(){
+  if(!S.connected||!S.addr)return;
+  const ri=document.getElementById('rfi');ri.classList.add('spin');
+  try{
+    await Promise.all([fetchUD(),fetchTxs(),fetchReferrals(),getbal()]);
+  }catch(e){}
+  ri.classList.remove('spin');
+  renderDash();renderCards(); // перерендер карточек с учётом sponsorLevel
+}
+
+async function fetchUD(){
+  if(!CFG.API_URL){S.ud=null;return;}
+  try{
+    const r=await fetch(CFG.API_URL+'/api/user/'+S.addr);
+    const j=await r.json();
+    if(j.ok&&j.data){
+      S.ud=j.data;
+      // Получаем уровень спонсора для блокировки карточек
+      await fetchSponsorLevel(j.data.referrer);
+    }else{S.ud=null;S.sponsorLevel=null;}
+  }catch(e){S.ud=null;}
+}
+
+async function fetchSponsorLevel(referrerWallet){
+  if(!referrerWallet||!CFG.API_URL){S.sponsorLevel=null;return;}
+  try{
+    const r=await fetch(CFG.API_URL+'/api/user/'+referrerWallet);
+    const j=await r.json();
+    S.sponsorLevel=(j.ok&&j.data&&j.data.activeLevel!=null)?j.data.activeLevel:null;
+  }catch(e){S.sponsorLevel=null;}
+}
+
+async function fetchTxs(){
+  if(!CFG.RPC_URL)return;
+  try{
+    const r=await fetch(CFG.RPC_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getSignaturesForAddress',params:[S.addr,{limit:20}]})});
+    const j=await r.json();
+    S.txs=(j.result||[]).map(s=>({sig:s.signature,date:s.blockTime?new Date(s.blockTime*1000).toLocaleString():'—',ok:!s.err}));
+  }catch(e){S.txs=[];}
+}
+
+async function fetchReferrals(){
+  if(!CFG.API_URL){S.referrals=[];return;}
+  try{
+    const r=await fetch(CFG.API_URL+'/api/user/'+S.addr+'/referrals');
+    const j=await r.json();
+    S.referrals=j.ok?j.data:[];
+  }catch(e){S.referrals=[];}
+}
+
+// ── Deposit ───────────────────────────────────────────────────────────────
+async function doDeposit(levelId){
+  if(!S.connected){wconn();return;}
+  const l=t();
+  const setS=s=>{S.txst[levelId]=s;renderCards();};
+
+  if(!window.solanaWeb3||!window.solanaWeb3.Connection){
+    toast('Solana Web3.js не загружен. Обновите страницу.');
+    setS({status:'err',e:'Web3.js not loaded'});
+    return;
+  }
+
+  if(!CFG.API_URL){
+    toast('API_URL не настроен в CFG');
+    return;
+  }
+
+  setS({status:'bld'});
+  const walletAdapter=getWallet();
+  if(!walletAdapter||!walletAdapter.publicKey){setS({status:'err',e:'Wallet not connected'});return;}
+
+  try{
+    const W=window.solanaWeb3;
+    const {Connection,PublicKey,Transaction,SystemProgram}=W;
+    const conn=new Connection(CFG.RPC_URL,'confirmed');
+    const wPK=walletAdapter.publicKey;
+
+    // Шаг 1: регистрация через бэкенд (если не зарегистрирован)
+    if(!S.ud){
+      setS({status:'reg'});
+      let referrer=null;
+      try{const rs=localStorage.getItem('fsl_r');if(rs&&rs!==wPK.toString())referrer=rs;}catch(e){}
+      const regResp=await fetch(CFG.API_URL+'/api/register',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({wallet:wPK.toString(),referrer}),
+      });
+      const regData=await regResp.json();
+      if(!regData.ok&&regData.error!=='AlreadyRegistered'){
+        setS({status:'err',e:regData.error||'Registration failed'});
+        return;
+      }
+    }
+
+    // Шаг 2: получаем prepared транзакцию с бэкенда
+    setS({status:'bld'});
+    const prepResp=await fetch(CFG.API_URL+'/api/deposit/prepare',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({wallet:wPK.toString(),levelId}),
+    });
+    const prepData=await prepResp.json();
+    if(!prepData.ok){
+      const errMsg=prepData.error==='LevelBelowSponsor'
+        ?`${l.lockedCard||'Level locked'}: ${l.lv[prepData.minLevel]||prepData.minLevel}`
+        :prepData.error||'Prepare failed';
+      setS({status:'err',e:errMsg});
+      if(prepData.error==='LevelBelowSponsor'&&prepData.minLevel!=null){
+        S.sponsorLevel=prepData.minLevel;renderCards();
+      }
+      return;
+    }
+
+    // Шаг 3: десериализуем и подписываем транзакцию
+    setS({status:'snd'});
+    const txBytes=Buffer.from(prepData.data.transactionBase64,'base64');
+    const tx=Transaction.from(txBytes);
+    const signedTx=await walletAdapter.signTransaction(tx);
+    const sig=await conn.sendRawTransaction(signedTx.serialize());
+    const{blockhash,lastValidBlockHeight}=await conn.getLatestBlockhash();
+    await conn.confirmTransaction({signature:sig,blockhash,lastValidBlockHeight},'confirmed');
+
+    // Шаг 4: подтверждаем на бэкенде
+    await fetch(CFG.API_URL+'/api/deposit/confirm',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({wallet:wPK.toString(),levelId,txSignature:sig}),
+    });
+
+    setS({status:'ok',sig});
+    await loadUD();
+  }catch(e){
+    const can=e.message?.includes('User rejected')||e.message?.includes('cancelled');
+    setS({status:can?'can':'err',e:e.message?.slice(0,70)||''});
+  }
+}
+
+// ── Stats / Ticker ────────────────────────────────────────────────────────
+async function buildTicker(){
+  const fallback=['↓ DEP +0.5 SOL · 7xKp…1234 · STARTER','⬡ REF +0.15 SOL · AbCd…5678','↓ DEP +10 SOL · MnOp…9012 · ELITE','⬡ REF +3.0 SOL · QrSt…3456','↓ DEP +1 SOL · UvWx…7890 · BASIC','⬡ REF +0.9 SOL · YzAb…1234','↓ DEP +3 SOL · CdEf…5678 · PRO'];
+  const setT=items=>{document.getElementById('tki').textContent=[...items,...items].join('   ·   ');};
+  setT(fallback);
+  if(!CFG.API_URL)return;
+  const poll=async()=>{try{const r=await fetch(CFG.API_URL+'/api/ticker');const j=await r.json();if(j.ok&&j.data?.formatted)document.getElementById('tki').textContent=j.data.formatted+'   ·   '+j.data.formatted;}catch(e){}};
+  await poll();setInterval(poll,60000);
+}
+
+async function loadGlobalStats(){
+  if(!CFG.API_URL)return;
+  try{
+    const r=await fetch(CFG.API_URL+'/api/stats');
+    const j=await r.json();
+    if(!j.ok||!j.data)return;
+    const d=j.data;
+    if(d.totalDepositedSol>0){
+      const sv1=document.getElementById('sv1');if(sv1)sv1.textContent=d.totalDepositedSol.toFixed(1)+' SOL';
+      const sv2=document.getElementById('sv2');if(sv2)sv2.textContent=d.totalUsers+' users';
+    }
+  }catch(e){}
+}
+
+// ── Уведомление при заблокированном уровне + кнопка "Начать самостоятельно" ──
+function showLockedNotification(){
+  const l=t();
+  if(S.sponsorLevel===null)return;
+  const lv=CFG.LEVELS[S.sponsorLevel];
+  if(!lv)return;
+  const msg=(l.lockedMsg||'Your friend is at {level} level. Available: {level} and above.\nNot ready? You can start independently from 0.5 SOL.')
+    .replace(/{level}/g,`${lv.emoji} ${l.lv[lv.id]}`);
+
+  // Показываем модалку
+  let modal=document.getElementById('locked-modal');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='locked-modal';
+    modal.style.cssText='position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)';
+    modal.onclick=(e)=>{if(e.target===modal)modal.remove();};
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML=`
+    <div style="background:#110a20;border:1px solid rgba(255,179,71,.3);border-radius:18px;padding:28px 24px;max-width:420px;width:100%;animation:fadeUp .3s ease">
+      <div style="font-size:28px;margin-bottom:12px">🔒</div>
+      <div style="font-family:var(--display);font-size:22px;color:var(--warn);margin-bottom:14px">${lv.emoji} ${l.lv[lv.id]}</div>
+      <div style="font-size:15px;color:#dde4f0;line-height:1.7;white-space:pre-line;margin-bottom:22px">${msg}</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button onclick="document.getElementById('locked-modal').remove()" style="background:linear-gradient(135deg,${lv.color},${lv.color}99);color:#000;border:none;border-radius:10px;padding:13px;cursor:pointer;font-weight:700;font-size:15px;font-family:'Space Grotesk',sans-serif">${lv.emoji} ${l.dep||'Deposit'} ${lv.sol} SOL</button>
+        <button onclick="confirmGoAlone()" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px;cursor:pointer;color:var(--muted);font-size:13px;font-family:'Space Grotesk',sans-serif;transition:all .15s" onmouseover="this.style.color='#dde4f0'" onmouseout="this.style.color='var(--muted)'">${l.goAlone||'Start independently'} →</button>
+      </div>
+    </div>`;
+}
+
+function goAlone(e){
+  e.stopPropagation();
+  showLockedNotification();
+}
+
+function confirmGoAlone(){
+  const l=t();
+  if(!confirm(l.goAloneConfirm||'You will lose the connection to your friend forever. Are you sure?'))return;
+  // Очищаем реферера
+  localStorage.removeItem('fsl_r');
+  S.sponsorLevel=null;
+  if(S.ud)S.ud.referrer=null;
+  document.getElementById('locked-modal')?.remove();
+  renderCards();
+  toast((l.goAlone||'Starting independently')+'...');
+}
+
+function toast(msg){const t=document.getElementById('tst');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),4000);}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+(function init(){
+  buildTicker();
+  loadGlobalStats();
+  applyLang();
+  updateFooterLegal();
+  renderCards();
+  renderHow();
+  renderFaq();
+
+  // Читаем реферальный код из URL (?r=PUBKEY или ?ref=PUBKEY)
+  try{
+    const params=new URLSearchParams(location.search);
+    const r=params.get('r')||params.get('ref');
+    if(r&&r.length>=32&&r.length<=44&&/^[1-9A-HJ-NP-Za-km-z]+$/.test(r)){
+      localStorage.setItem('fsl_r',r);
+    }
+    // Если в URL указан уровень — читаем уровень друга и показываем уведомление
+    const lvParam=params.get('level');
+    if(lvParam&&r){
+      const lvIdx=CFG.LEVELS.findIndex(lv=>lv.key===lvParam);
+      if(lvIdx>=0){
+        S.sponsorLevel=lvIdx;
+        // Показываем уведомление с небольшой задержкой после рендера
+        setTimeout(()=>showLockedNotification(),800);
+      }
+    }
+  }catch(e){}
+
+  // Мобильный Phantom
+  const isMobile=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+  if(isMobile&&!window.phantom&&!window.solana){
+    const wb=document.getElementById('wb');
+    if(wb){wb.textContent='📱 Open in Phantom App';wb.onclick=()=>window.open('https://phantom.app/ul/browse/'+encodeURIComponent(location.href),'_blank');}
+  }
+
+  const w=getWallet();
+  if(w){
+    w.connect({onlyIfTrusted:true}).then(r=>{
+      S.addr=r.publicKey.toString();S.connected=true;
+      getbal();setWUI();loadUD();
+    }).catch(()=>{});
+    if(w.on){w.on('disconnect',wdisc);}
+  }
+})();
+</script>
+
+<script src="https://unpkg.com/@solana/web3.js@1.87.6/lib/index.iife.min.js" async defer crossorigin="anonymous" onerror="document.getElementById('tst').textContent='⚠️ Solana Web3.js не загружен.';document.getElementById('tst').classList.add('on');setTimeout(()=>document.getElementById('tst').classList.remove('on'),6000);"></script>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>

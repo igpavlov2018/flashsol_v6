@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>FlashSol Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#050810;color:#dde4f0;font-family:'Space Grotesk',sans-serif;min-height:100vh;padding:0}
+:root{
+  --acc:#4fffb0;--acc2:#00c6ff;--warn:#ffb347;--danger:#ff4d6d;
+  --bg2:#0a1020;--bg3:#0f1830;--bg4:#162040;
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);
+  --muted:#4a5a7a;--mono:'IBM Plex Mono',monospace;
+}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#162040;border-radius:3px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Layout */
+.shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:20px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{display:flex;align-items:center;gap:9px;margin-bottom:18px;padding:0 6px}
+.logo .ic{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:flex;align-items:center;justify-content:center;font-size:16px;color:#000;font-weight:900}
+.logo .nm{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--acc)}
+.logo .tag{font-size:9px;color:var(--muted);margin-top:1px}
+.navitem{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:9px;cursor:pointer;font-size:13px;color:var(--muted);transition:all .15s;border:none;background:transparent;width:100%;text-align:left}
+.navitem:hover,.navitem.on{background:rgba(79,255,176,.08);color:var(--acc)}
+.navitem .ic2{font-size:15px;width:20px;text-align:center}
+.main{padding:28px;flex:1;animation:fadeUp .3s ease}
+
+/* Top bar */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.topbar h1{font-size:22px;font-weight:700}
+.status-badge{display:flex;align-items:center;gap:7px;background:rgba(79,255,176,.07);border:1px solid rgba(79,255,176,.2);border-radius:100px;padding:5px 14px;font-size:11px;color:var(--acc);font-family:var(--mono)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--acc)}
+
+/* Auth screen */
+#auth{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.auth-box{background:var(--bg3);border:1px solid var(--border2);border-radius:18px;padding:36px;width:100%;max-width:380px}
+.auth-box h2{font-size:22px;margin-bottom:6px}
+.auth-box p{font-size:13px;color:var(--muted);margin-bottom:22px}
+.inp{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;color:#dde4f0;font-family:var(--mono);font-size:14px;outline:none;transition:border-color .15s}
+.inp:focus{border-color:rgba(79,255,176,.4)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;border-radius:10px;padding:11px 20px;cursor:pointer;font-weight:700;font-size:13px;font-family:'Space Grotesk',sans-serif;transition:all .15s}
+.btn-acc{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#000}
+.btn-ghost{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted)}
+.btn-ghost:hover{background:rgba(255,255,255,.09);color:#dde4f0}
+.btn-danger{background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.3);color:var(--danger)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.spin{animation:spin .7s linear infinite;display:inline-block}
+
+/* Stat cards */
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:18px}
+.stat .lb{font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-family:var(--mono);margin-bottom:8px}
+.stat .vl{font-family:var(--mono);font-size:28px;font-weight:700;line-height:1}
+.stat .sub{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* Table */
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px}
+.card-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-head h3{font-size:14px;font-weight:600}
+.card-body{padding:14px 18px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:0 0 9px;color:var(--muted);font-size:9px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);font-weight:400;text-align:left}
+td{padding:9px 0;border-top:1px solid var(--border)}
+.pill{display:inline-block;border-radius:5px;padding:2px 7px;font-size:9px;font-weight:700;font-family:var(--mono)}
+.pill-ok{background:rgba(79,255,176,.1);color:var(--acc);border:1px solid rgba(79,255,176,.25)}
+.pill-warn{background:rgba(255,179,71,.1);color:var(--warn);border:1px solid rgba(255,179,71,.25)}
+.pill-err{background:rgba(255,77,109,.1);color:var(--danger);border:1px solid rgba(255,77,109,.25)}
+.mono{font-family:var(--mono);font-size:11px}
+.muted{color:var(--muted)}
+a{color:var(--acc2);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Alert */
+.alert{border-radius:10px;padding:12px 16px;font-size:12px;margin-bottom:14px}
+.alert-warn{background:rgba(255,179,71,.07);border:1px solid rgba(255,179,71,.22);color:var(--warn)}
+.alert-err{background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.22);color:var(--danger)}
+.alert-ok{background:rgba(79,255,176,.07);border:1px solid rgba(79,255,176,.2);color:var(--acc)}
+
+/* Error toast */
+#toast{position:fixed;bottom:20px;right:20px;z-index:999;padding:12px 18px;border-radius:10px;font-size:12px;display:none;animation:fadeUp .3s ease;max-width:320px}
+#toast.on{display:block}
+#toast.err{background:rgba(255,77,109,.12);border:1px solid rgba(255,77,109,.3);color:var(--danger)}
+#toast.ok{background:rgba(79,255,176,.12);border:1px solid rgba(79,255,176,.3);color:var(--acc)}
+
+/* Pages */
+.pg{display:none}.pg.on{display:block}
+@media(max-width:768px){.shell{grid-template-columns:1fr}.sidebar{display:none}.grid4{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<!-- Auth Screen -->
+<div id="auth">
+  <div class="auth-box">
+    <h2>⚡ FlashSol Admin</h2>
+    <p>Enter admin secret to continue</p>
+    <input class="inp" id="secret-inp" type="password" placeholder="Admin secret…" style="margin-bottom:12px"
+      onkeydown="if(event.key==='Enter')login()"/>
+    <br/>
+    <input class="inp" id="api-inp" type="text" placeholder="API URL (default: http://localhost:3001)" style="margin-bottom:16px"/>
+    <button class="btn btn-acc" style="width:100%" onclick="login()">Enter</button>
+    <div id="auth-err" style="color:var(--danger);font-size:12px;margin-top:10px;display:none"></div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="app" style="display:none">
+  <div class="shell">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">
+        <div class="ic">⚡</div>
+        <div><div class="nm">FLASHSOL</div><div class="tag">Admin Panel</div></div>
+      </div>
+      <button class="navitem on" onclick="go('overview')" id="nav-overview"><span class="ic2">📊</span> Overview</button>
+      <button class="navitem"    onclick="go('events')"   id="nav-events"><span class="ic2">⚡</span> Events</button>
+      <button class="navitem"    onclick="go('system')"   id="nav-system"><span class="ic2">⚙️</span> System</button>
+      <div style="flex:1"></div>
+      <button class="navitem" onclick="logout()" style="margin-top:auto"><span class="ic2">🚪</span> Logout</button>
+    </div>
+
+    <!-- Main -->
+    <div class="main">
+      <!-- Overview -->
+      <div class="pg on" id="pg-overview">
+        <div class="topbar">
+          <h1>Overview</h1>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div class="status-badge"><div class="dot"></div><span id="net-label">devnet</span></div>
+            <button class="btn btn-ghost" onclick="refresh()">⟳ Refresh</button>
+          </div>
+        </div>
+
+        <div id="paused-alert" class="alert alert-err" style="display:none">
+          ⚠️ Program is currently <strong>PAUSED</strong>. Deposits are disabled.
+        </div>
+
+        <div class="grid4" id="stats-grid">
+          <div class="stat"><div class="lb">Total Deposited</div><div class="vl acc" id="s-tvl">—</div><div class="sub">SOL</div></div>
+          <div class="stat"><div class="lb">Total Users</div><div class="vl" id="s-users">—</div><div class="sub">registered</div></div>
+          <div class="stat"><div class="lb">Ref Paid Out</div><div class="vl" id="s-ref">—</div><div class="sub">SOL</div></div>
+          <div class="stat"><div class="lb">Status</div><div class="vl" id="s-status">—</div><div class="sub" id="s-net">—</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>Recent Events</h3><span class="muted mono" style="font-size:10px" id="event-count"></span></div>
+          <div class="card-body">
+            <table>
+              <thead><tr><th>Type</th><th>User</th><th>Amount</th><th>Level</th><th>Signature</th><th>Time</th></tr></thead>
+              <tbody id="events-tbl"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Events -->
+      <div class="pg" id="pg-events">
+        <div class="topbar"><h1>All Events</h1><button class="btn btn-ghost" onclick="refresh()">⟳ Refresh</button></div>
+        <div class="card">
+          <div class="card-body">
+            <table>
+              <thead><tr><th>Type</th><th>User</th><th>Amount (SOL)</th><th>Level</th><th>Signature</th><th>Timestamp</th></tr></thead>
+              <tbody id="all-events-tbl"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- System -->
+      <div class="pg" id="pg-system">
+        <div class="topbar"><h1>System</h1></div>
+        <div class="card" style="max-width:500px">
+          <div class="card-head"><h3>Server Info</h3></div>
+          <div class="card-body" id="sys-info" style="font-family:var(--mono);font-size:12px;line-height:2"></div>
+        </div>
+        <div class="card" style="max-width:500px">
+          <div class="card-head"><h3>Actions</h3></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn btn-ghost" onclick="clearCache()">🗑 Clear Cache</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let API = '';
+let SECRET = '';
+
+function login() {
+  const s = document.getElementById('secret-inp').value.trim();
+  const api = document.getElementById('api-inp').value.trim() || 'http://localhost:3001';
+  if (!s) { showAuthErr('Enter admin secret'); return; }
+  API = api;
+  SECRET = s;
+  document.getElementById('auth-err').style.display = 'none';
+  loadAll();
+}
+
+function logout() {
+  SECRET = '';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth').style.display = 'flex';
+}
+
+async function apiFetch(path, opts={}) {
+  const r = await fetch(API + path, {
+    ...opts,
+    headers: { 'x-admin-secret': SECRET, 'Content-Type': 'application/json', ...(opts.headers||{}) },
+  });
+  if (r.status === 401) throw new Error('Unauthorized');
+  return r.json();
+}
+
+async function loadAll() {
+  try {
+    const data = await apiFetch('/api/admin/overview');
+    if (!data.ok) throw new Error(data.error || 'API error');
+
+    document.getElementById('auth').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+
+    renderOverview(data.data);
+    renderEvents(data.data.recentEvents || []);
+    renderSystem(data.data);
+  } catch(e) {
+    showAuthErr(e.message);
+  }
+}
+
+function renderOverview(d) {
+  const oc = d.onChain;
+  const fmt = v => typeof v === 'number' ? v.toFixed(3) : '—';
+  document.getElementById('s-tvl').textContent    = oc ? fmt(oc.totalDepositedSol) : '—';
+  document.getElementById('s-users').textContent  = oc ? oc.totalUsers : '—';
+  document.getElementById('s-ref').textContent    = oc ? fmt(oc.totalRefPaidSol) : '—';
+  document.getElementById('s-status').textContent = oc ? (oc.paused ? '⏸ Paused' : '✓ Active') : 'Not deployed';
+  document.getElementById('s-status').style.color = oc?.paused ? 'var(--danger)' : 'var(--acc)';
+  document.getElementById('s-net').textContent    = process?.env?.SOLANA_NETWORK || 'devnet';
+  document.getElementById('net-label').textContent = 'network';
+  document.getElementById('paused-alert').style.display = oc?.paused ? 'block' : 'none';
+
+  const events = (d.recentEvents || []).slice(0, 10);
+  document.getElementById('event-count').textContent = events.length + ' events';
+  document.getElementById('events-tbl').innerHTML = renderEventRows(events);
+}
+
+function renderEvents(events) {
+  document.getElementById('all-events-tbl').innerHTML = renderEventRows(events);
+}
+
+function renderEventRows(events) {
+  if (!events.length) return '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:20px">No events yet</td></tr>';
+  const net = 'devnet'; // adjust dynamically if needed
+  const sc = sig => `https://solscan.io/tx/${sig}${net==='devnet'?'?cluster=devnet':''}`;
+  const sh = s => s ? s.slice(0,6)+'…'+s.slice(-4) : '—';
+  const fmtTime = ts => ts ? new Date(ts).toLocaleString() : '—';
+  return events.map(e => `
+    <tr>
+      <td><span class="pill ${e.type==='deposit'?'pill-ok':'pill-warn'}">${e.type.toUpperCase()}</span></td>
+      <td class="mono">${sh(e.user)}</td>
+      <td class="mono" style="color:var(--acc)">+${e.amount} SOL</td>
+      <td>${e.levelName||'—'}</td>
+      <td><a href="${sc(e.sig)}" target="_blank" class="mono">${sh(e.sig)}</a></td>
+      <td class="mono muted">${fmtTime(e.ts)}</td>
+    </tr>`).join('');
+}
+
+function renderSystem(d) {
+  document.getElementById('sys-info').innerHTML = `
+    <div>Uptime: <strong>${Math.round(d.uptime)}s</strong></div>
+    <div>Memory: <strong>${d.memMB} MB</strong></div>
+    <div>Admin: <strong>${d.onChain?.admin?.slice(0,8)||'—'}…</strong></div>
+    <div>Project wallet: <strong>${d.onChain?.projectWallet?.slice(0,8)||'—'}…</strong></div>
+  `;
+}
+
+async function clearCache() {
+  try {
+    await apiFetch('/api/admin/cache/clear', { method: 'POST' });
+    toast('Cache cleared ✓', 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+function go(page) {
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.navitem').forEach(n=>n.classList.remove('on'));
+  document.getElementById('pg-'+page).classList.add('on');
+  document.getElementById('nav-'+page).classList.add('on');
+}
+
+function refresh() { loadAll(); }
+
+function showAuthErr(msg) {
+  const el = document.getElementById('auth-err');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function toast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'on ' + type;
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>t.classList.remove('on'), 3500);
+}
+</script>
+</body>
+</html>
